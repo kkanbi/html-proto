@@ -27,6 +27,8 @@ function weightedTarget(run, actor) {
 }
 function clamp(v,min,max) { return Math.max(min,Math.min(max,v)); }
 function randomAvailability(rng) { const roll=rng(); return roll<.55?'single':roll<.78?'unknown':'partner'; }
+const NPC_COLORS={seojin:'#d95f43',doyoon:'#4a76c9',narae:'#e09b2d',taesung:'#5b8a68',sua:'#b06fae',minjae:'#2f9dab',jihoo:'#8577d6'};
+function npcChip(run,ref){ const n=typeof ref==='string'?run.npcs.find(x=>x.id===ref):ref; if(!n) return ''; return `<span class="npc-chip" style="--chip:${NPC_COLORS[n.id]||'#7b8790'}"><i>${n.name.charAt(0)}</i>${n.name}</span>`; }
 const AFFINITY_HOOKS = [
   {id:'seatmate',label:'옆자리',desc:'사소한 회사 생활 접점이 자주 생겨 친밀도가 빨리 오른다.'},
   {id:'cohort',label:'입사동기',desc:'같이 적응하는 처지라 초반 개인 이벤트에서 더 쉽게 가까워진다.'},
@@ -52,7 +54,7 @@ function addPlayerCloseness(run,npc,amount,context,dayLog,source) {
   if(!npc) return 0;
   const bonus=affinityBonus(run,npc,context);
   npc.playerCloseness+=amount+bonus;
-  if(bonus&&dayLog) dayLog.push({type:'player',text:`<strong>호감 보너스 · ${npc.name}</strong><br>${npc.affinityHook.label} 효과로 ${source||'이번 접점'}이 더 좋은 기억으로 남았다. <span class="muted">(추가 친밀도 +${bonus})</span>`});
+  if(bonus&&dayLog) dayLog.push({type:'player',role:'bonus',who:[npc.id],text:`${npc.affinityHook.label} 효과로 ${source||'이번 접점'}이 더 좋은 기억으로 남았다. <span class="muted">(추가 친밀도 +${bonus})</span>`});
   return amount+bonus;
 }
 
@@ -85,7 +87,7 @@ function maybeGainEventKnowledge(run,event,actors,outcome,choice,dayLog) {
   const target=actors[0];
   if(outcome.label==='성공'&&run.rng()<chance) {
     gainKnowledge(run,target,`${event.title}에서 눈에 띈 반응을 기억함`);
-    dayLog.push({type:'player',text:`<strong>작은 단서 · ${target.name}</strong><br>사건을 겪으며 ${target.name}의 반응 하나를 기억했다. <span class="muted">(정보 +1)</span>`});
+    dayLog.push({type:'player',role:'clue',who:[target.id],text:`사건을 겪으며 ${target.name}의 반응 하나를 기억했다. <span class="muted">(정보 +1)</span>`});
   }
 }
 function maybeMarkRomanceMoment(run,event,actors,outcome,dayLog) {
@@ -95,14 +97,14 @@ function maybeMarkRomanceMoment(run,event,actors,outcome,dayLog) {
   if(!isPrivateContext) return;
   actors.filter(n=>n.boundary==='strict').forEach(n=>{
     run.flags.romanceMoments[n.id]=event.title;
-    dayLog.push({type:'player',text:`<strong>경계가 풀린 순간 · ${n.name}</strong><br>${event.title}에서 ${n.name}이(가) 평소보다 사적인 모습을 조금 보였다.`});
+    dayLog.push({type:'player',role:'hint',who:[n.id],text:`${event.title}에서 ${n.name}이(가) 평소보다 사적인 모습을 조금 보였다.`});
   });
 }
 function revealPrivateClue(run,npc,dayLog,source) {
   if(!npc||run.rng()>.22) return;
   const text=npc.availability==='partner'?`${npc.name}에게 이미 만나는 사람이 있다는 단서를 얻었다.`:npc.availability==='unknown'?`${npc.name}의 연애 상태는 아직 애매하지만, 사적인 이야기를 잘 숨기는 편임을 알았다.`:`${npc.name}의 이상형은 ${npc.idealText}에 가깝다는 단서를 얻었다.`;
   gainKnowledge(run,npc,`${source}: ${text}`,2);
-  dayLog.push({type:'player',text:`<strong>개인 단서 · ${npc.name}</strong><br>${text} <span class="muted">(정보 +2)</span>`});
+  dayLog.push({type:'player',role:'clue',who:[npc.id],text:`${text} <span class="muted">(정보 +2)</span>`});
 }
 function personalFit(run,npc) { if(!npc) return {score:0,met:[],missing:[]}; const met=[],missing=[]; Object.entries(npc.ideal||{}).forEach(([key,need])=>{ if(run.player.skills[key]>=need) met.push(`${skillName(key)} ${need}+`); else missing.push(`${skillName(key)} ${need}+`); }); const score=met.length*6-missing.length*5+(run.player.skills.sense>=3?3:-4); return {score,met,missing}; }
 function romanceReadiness(run,npc) {
@@ -142,8 +144,8 @@ function chooseAction(run, actor, mood) {
 
 function applyAction(run, actor, action, pressure, dayLog, mood) {
   const target = weightedTarget(run,actor); const e = edge(run,actor,target);
-  const add = (values,text) => { change(e,values,`D${run.day}: ${text}`); applyInteractionClimate(run,e,action,mood,dayLog); dayLog.push({type:'normal', text}); };
-  if(['업무 집중','주간 보고 준비','자료 정리'].includes(action)){ actor.stress=clamp(actor.stress+(action==='업무 집중'?7:4),0,100); dayLog.push({type:'normal', text:`${actor.name}은(는) ${action}에 몰입했다. <span class="muted">(${pressure}, 스트레스 +${action==='업무 집중'?7:4})</span>`}); return; }
+  const add = (values,text) => { change(e,values,`D${run.day}: ${text}`); applyInteractionClimate(run,e,action,mood,dayLog); dayLog.push({type:'normal', who:[actor.id,target.id], text}); };
+  if(['업무 집중','주간 보고 준비','자료 정리'].includes(action)){ actor.stress=clamp(actor.stress+(action==='업무 집중'?7:4),0,100); dayLog.push({type:'normal', who:[actor.id], text:`${actor.name}은(는) ${action}에 몰입했다. <span class="muted">(${pressure}, 스트레스 +${action==='업무 집중'?7:4})</span>`}); return; }
   if(action==='건강 챙기기'){ actor.stress=clamp(actor.stress-10,0,100); add({affection:2},`${actor.name}은(는) 컨디션이 좋지 않아 ${target.name}의 배려를 받았다. <span class="muted">(스트레스 -10, 친밀도 +2)</span>`); return; }
   if(action==='도움 요청'){ actor.stress=clamp(actor.stress-5,0,100); add({trust:3,affection:2},`${actor.name}이(가) ${target.name}에게 업무 도움을 요청했고, ${target.name}이(가) 받아들였다. <span class="muted">(신뢰 +3, 친밀도 +2)</span>`); return; }
   if(action==='업무 지원'){ actor.stress=clamp(actor.stress+3,0,100); add({trust:4,affection:2},`${actor.name}이(가) ${target.name}의 막힌 업무를 지원했다. <span class="muted">(신뢰 +4, 친밀도 +2)</span>`); return; }
@@ -193,9 +195,10 @@ function eligibleEvents(run, pressure) {
 
 function resolveEvent(run, event, dayLog, choice=null) {
   const first=run.npcs.find(n=>n.id===run.firstConnection); const actors=event.actors.filter((v,i,a)=>v&&a.findIndex(n=>n.id===v.id)===i); const pair=actors.length>1?edge(run,actors[0],actors[1]):null;
-  run.eventHistory[event.id]=run.day; dayLog.push({type:'event', label:eventLabel(event), text:`<strong>${event.title}</strong><br>${event.text}`});
+  const startIdx=dayLog.length;
+  run.eventHistory[event.id]=run.day; dayLog.push({type:'event', label:eventLabel(event), groupRole:'header', eventTitle:event.title, eventText:event.text, eventKind:event.kind, actors:actors.map(n=>n.id), text:`<strong>${event.title}</strong><br>${event.text}`});
   if(choice) applyEventChoice(run,event,actors,choice,dayLog);
-  const outcome=resolveEventCheck(run,event,actors,choice?.bonus||0); dayLog.push({type:'player',text:`<strong>플레이어 판정 · ${outcome.label}</strong><br>${outcome.detail}`});
+  const outcome=resolveEventCheck(run,event,actors,choice?.bonus||0); dayLog.push({type:'player',role:'judge',outcome:outcome.label,text:outcome.detail});
   maybeGainEventKnowledge(run,event,actors,outcome,choice,dayLog);
   maybeMarkRomanceMoment(run,event,actors,outcome,dayLog);
   applyEventClimate(run,event,actors,outcome,dayLog,choice);
@@ -211,6 +214,7 @@ function resolveEvent(run, event, dayLog, choice=null) {
   else if(event.kind==='leader') { const l=actors[0]; dayLog.push({type:'player',text:outcome.label==='성공'?`팀장 ${l.name}이(가) 이번 결과를 좋게 봤다. <span class="muted">(판정 성공으로 업무 신뢰 상승)</span>`:`팀장 ${l.name}은(는) 아직 결과를 더 지켜보기로 했다.`}); }
   else if(event.id==='heartbreak') { const target=actors[0]; revealPrivateClue(run,target,dayLog,event.title); if(outcome.label==='성공'){ const closeGain=addPlayerCloseness(run,target,5,'romance',dayLog,'실연의 여파를 함께 넘긴 일'); target.playerTrust+=1; target.stress=clamp(target.stress-8,0,100); dayLog.push({type:'player',text:`${target.name}은(는) 플레이어가 선을 넘지 않고 들어 준 것을 기억했다. <span class="muted">(친밀도 +${closeGain}, 스트레스 -8)</span>`}); } else { target.playerCloseness-=4; target.playerTrust-=2; target.stress=clamp(target.stress+6,0,100); dayLog.push({type:'player',text:`타이밍을 잘못 잡아 ${target.name}이(가) 더 방어적으로 굳었다. <span class="muted">(친밀도 -4, 신뢰 -2)</span>`}); } }
   else { if(pair) change(pair,event.kind==='personal'?{affection:3,tension:-1}:{trust:3,affection:1},`D${run.day}: ${event.title}`); actors.forEach(n=>addPlayerCloseness(run,n,2,['personal','rest'].includes(event.kind)?event.kind:'personal',dayLog,event.title)); if(['personal','rest'].includes(event.kind)) actors.forEach(n=>revealPrivateClue(run,n,dayLog,event.title)); dayLog.push({type:'player',text:'플레이어가 상황을 함께 겪으며 관련 인물에 대한 정보를 얻었다.'}); }
+  for(let i=startIdx;i<dayLog.length;i++){ const item=dayLog[i]; item.group=event.id; if(!item.role&&!item.groupRole&&item.type==='player') item.role='outcome'; }
   run.eventCount++;
 }
 
@@ -254,7 +258,53 @@ function eventLabel(event) {
   if(event.kind==='conflict') return '갈등';
   return '회사';
 }
-function logLabel(item) { return item.label||({player:'플레이어',team:'팀공기',normal:'NPC행동',event:'사건'})[item.type]||'일지'; }
+const FLOW_META={choice:['선택','choice'],judge:['판정','judge'],react:['반응','react'],clue:['단서','clue'],hint:['전조','hint'],bonus:['호감','bonus'],outcome:['결과','outcome']};
+function flowItemHtml(run,item){
+  if(item.type==='team') return `<div class="flow-item team"><span class="flow-tag">팀공기</span><div>${item.text}</div></div>`;
+  const meta=FLOW_META[item.role]||['기록','note'];
+  const judged=item.role==='judge';
+  const cls=judged?`judge ${item.outcome==='성공'?'good':item.outcome==='실패'?'bad':''}`:meta[1];
+  const tag=judged?`판정 ${item.outcome}`:meta[0];
+  const chips=(item.who||[]).map(id=>npcChip(run,id)).join('');
+  return `<div class="flow-item ${cls}"><span class="flow-tag">${tag}</span><div>${chips?`<div class="line-chips">${chips}</div>`:''}${item.text}</div></div>`;
+}
+function eventCardHtml(run,items){
+  const header=items.find(x=>x.groupRole==='header')||items[0];
+  const body=items.filter(x=>x!==header);
+  const chips=(header.actors||[]).map(id=>npcChip(run,id)).join('');
+  const cls=header.label==='개인랜덤'?'personal':header.eventKind==='rest'?'rest':(header.label||'').startsWith('필수')?'required':'company';
+  return `<div class="event-card ${cls}"><div class="event-card-head"><span class="log-label">${header.label||'사건'}</span><strong>${header.eventTitle||''}</strong></div>${chips?`<div class="event-actors">${chips}</div>`:''}${header.eventText?`<div class="event-desc">${header.eventText}</div>`:''}${body.length?`<div class="event-flow">${body.map(x=>flowItemHtml(run,x)).join('')}</div>`:''}</div>`;
+}
+function backgroundLineHtml(run,item){
+  const cls=item.type==='team'?'team':item.type==='player'?'player':'';
+  const label=item.type==='team'?'팀공기':item.type==='player'?'플레이어':'NPC행동';
+  const chips=(item.who||[]).map(id=>npcChip(run,id)).join('');
+  return `<div class="log-item ${cls}"><span class="log-label">${label}</span><div class="log-copy">${chips?`<div class="line-chips">${chips}</div>`:''}${item.text}</div></div>`;
+}
+function dayCardHtml(run,day){
+  const title=day.find(x=>x.type==='title');
+  const closingLabels=['관계변화','오늘요약','일일 관계변화'];
+  const morning=[],closing=[],groups=[],seen={};
+  day.filter(x=>x.type!=='title').forEach(item=>{
+    if(closingLabels.includes(item.label)){closing.push(item);return;}
+    if(item.group){ if(!seen[item.group]){seen[item.group]={items:[]};groups.push(seen[item.group]);} seen[item.group].items.push(item); return; }
+    morning.push(item);
+  });
+  const isPersonalRandom=g=>g.items.some(x=>x.label==='개인랜덤');
+  const morningGroups=groups.filter(isPersonalRandom), mainGroups=groups.filter(g=>!isPersonalRandom(g));
+  const isRest=g=>(g.items.find(x=>x.groupRole==='header')||{}).eventKind==='rest';
+  const closingHtml=closing.map(item=>{
+    if(item.label==='관계변화') return `<div class="flow-item shift"><span class="flow-tag">관계 전환</span><div>${item.text}</div></div>`;
+    if(item.label==='일일 관계변화') return `<div class="flow-item deltas"><span class="flow-tag">관계 변화</span><div>${item.text}</div></div>`;
+    return `<div class="flow-item recap"><span class="flow-tag">오늘 요약</span><div>${item.text}</div></div>`;
+  }).join('');
+  return `<div class="log-day">
+    <div class="day-head"><span class="day-num">D${title?.day??run.day}</span><div class="day-meta"><strong>${title?.phase||''}</strong><span class="pressure-chip">오늘의 압박 · ${title?.pressure||''}</span></div></div>
+    ${morning.length||morningGroups.length?`<div class="period"><div class="period-tag">오전 · 사무실 공기</div>${morning.map(x=>backgroundLineHtml(run,x)).join('')}${morningGroups.map(g=>eventCardHtml(run,g.items)).join('')}</div>`:''}
+    ${mainGroups.length?mainGroups.map(g=>`<div class="period"><div class="period-tag">${isRest(g)?'퇴근 후':'오후 · 오늘의 사건'}</div>${eventCardHtml(run,g.items)}</div>`).join(''):''}
+    ${closing.length?`<div class="period"><div class="period-tag">하루 마무리</div>${closingHtml}</div>`:''}
+  </div>`;
+}
 function personalRandomEvent(run,dayLog) {
   const chance=run.day<=5?.72:.52;
   if(run.rng()>chance) return;
@@ -269,10 +319,12 @@ function personalRandomEvent(run,dayLog) {
     {id:'praise',title:'칭찬이 필요한 날',text:`${npc.name}은(는) 자신의 일이 묻힌 것 같아 예민해졌고, ${partner.name}의 한마디에 표정이 조금 풀렸다.`,values:{affection:3,tension:-2},player:2}
   ];
   const event=pick(run.rng,templates);
+  const startIdx=dayLog.length;
   change(e,event.values,`D${run.day}: ${event.title}`);
   const playerGain=addPlayerCloseness(run,npc,event.player,'personal',dayLog,event.title);
   if(playerGain>0) gainKnowledge(run,npc,`${event.title}에서 사적인 반응을 봄`);
-  dayLog.push({type:'event',label:'개인랜덤',text:`<strong>${event.title} · ${npc.name}</strong><br>${event.text} <span class="muted">(NPC 관계 변화${playerGain?`, ${npc.name} 친밀도 +${playerGain}`:''})</span>`});
+  dayLog.push({type:'event',label:'개인랜덤',groupRole:'header',eventTitle:event.title,eventKind:'personalRandom',actors:[npc.id,partner.id],eventText:`${event.text} <span class="muted">(NPC 관계 변화${playerGain?`, ${npc.name} 친밀도 +${playerGain}`:''})</span>`,text:''});
+  for(let i=startIdx;i<dayLog.length;i++) dayLog[i].group=`pr${run.day}`;
 }
 function applyNpcEventResponses(run,event,actors,outcome,dayLog) {
   if(!actors.length||event.kind==='rest') return;
@@ -318,7 +370,7 @@ function applyNpcEventResponses(run,event,actors,outcome,dayLog) {
     ]);
   }
   if(observer&&responder.id!==observer.id) change(edge(run,responder,observer),values,`D${run.day}: ${event.title} 이후 반응`);
-  dayLog.push({type:'normal',label:'NPC반응',text:`<strong>${event.title} 이후 반응</strong><br>${text}`});
+  dayLog.push({type:'normal',label:'NPC반응',role:'react',who:observer&&observer.id!==responder.id?[responder.id,observer.id]:[responder.id],text});
 }
 function eventRequirements(event) { const map={kickoff:['sense'],mentor_feedback:['work'],team_meeting_1:['sense','talk'],first_task:['work'],company_dinner:['talk','sense'],mid_review:['work','sense'],team_meeting_2:['plan','talk'],big_task:['plan','talk'],workshop:['talk','sense'],project_gap:['work','sense'],final_review:['work','sense'],weekly_report:['work','sense'],minutes_gap:['sense','work'],client_feedback:['talk','sense'],data_cleanup:['work','plan'],sudden_presentation:['plan','talk'],manager_checkin:['sense','talk'],handoff_miss:['work','sense'],tea_time:['talk'],health:['sense'],interest:['talk'],heartbreak:['sense','talk'],leader_absent:['sense'],credit_conflict:['work','talk']}; return map[event.id]||(['personal','rumor'].includes(event.kind)?['talk']:['work']); }
 function eventSupport(run, requirements) { const candidates=run.npcs.filter(n=>n.playerTrust>=12).map(n=>{const matching=Math.max(...requirements.map(key=>n.skills[key]||0)); const stat=requirements.find(key=>(n.skills[key]||0)===matching); return {name:n.name,stat:skillName(stat),value:matching,npc:n};}).filter(x=>x.value>=3).sort((a,b)=>b.value-a.value); return candidates[0]||{name:null,stat:null,value:0}; }
@@ -415,7 +467,7 @@ function applyEventChoice(run,event,actors,choice,dayLog) {
   if(choice.id==='invite'&&primary){ addPlayerCloseness(run,primary,8,'rest',dayLog,'퇴근 후 같이 쉰 일'); player.stress=clamp(player.stress-6,0,100); }
   if(choice.id==='call'&&first){ addPlayerCloseness(run,first,6,'rest',dayLog,'퇴근 후 전화한 일'); player.stress=clamp(player.stress-3,0,100); }
   if(choice.id==='solo'){ player.stress=clamp(player.stress-8,0,100); }
-  dayLog.push({type:'player',text:`<strong>플레이어 선택 · ${choice.label}</strong><br><span class="muted">${choice.hint}</span>`});
+  dayLog.push({type:'player',role:'choice',text:`<strong>${choice.label}</strong> <span class="muted">— ${choice.hint}</span>`});
   player.impacts.unshift({day:run.day,kind:'choice',text:`${event.title}에서 ${choice.label} 선택`});
 }
 
@@ -444,7 +496,7 @@ function scanDailyRelationDeltas(run,before,dayLog) {
   const changes=Object.values(run.relations).map(e=>{const prev=before[e.a+'|'+e.b]; if(!prev) return null; const deltas=['trust','affection','tension','competition'].map(k=>({key:k,value:e[k]-prev[k]})).filter(d=>d.value); const score=deltas.reduce((sum,d)=>sum+Math.abs(d.value),0); return {e,deltas,score};}).filter(Boolean).filter(x=>x.score>=5).sort((a,b)=>b.score-a.score).slice(0,3);
   if(!changes.length) return;
   const lines=changes.map(x=>{const a=run.npcs.find(n=>n.id===x.e.a),b=run.npcs.find(n=>n.id===x.e.b); const deltaText=x.deltas.map(d=>`${names[d.key]} ${d.value>0?'+':''}${d.value}`).join(' · '); return `${a.name} ↔ ${b.name}: ${deltaText} <span class="muted">(${x.e.history.at(-1)||'누적된 상호작용'})</span>`;});
-  dayLog.push({type:'event',label:'일일 관계변화',text:`<strong>오늘 크게 흔들린 관계</strong><br>${lines.join('<br>')}`});
+  dayLog.push({type:'event',label:'일일 관계변화',text:lines.join('<br>')});
 }
 function addDailyKeySummary(run,before,dayLog) {
   const names={trust:'신뢰',affection:'친밀',tension:'긴장',competition:'경쟁'};
@@ -462,7 +514,7 @@ function addDailyKeySummary(run,before,dayLog) {
 function simulateDay(run) {
   if(!run.firstConnection || run.day>=30 || run.pendingEvent) return;
   const before=snapshotRelations(run);
-  run.day++; const pressure=pick(run.rng,PRESSURES); const dayLog=[]; const mood=teamAtmosphere(run); dayLog.push({type:'title', text:`D${run.day} · ${companyPhase(run.day)} · 오늘의 압박: ${pressure}`});
+  run.day++; const pressure=pick(run.rng,PRESSURES); const dayLog=[]; const mood=teamAtmosphere(run); dayLog.push({type:'title', day:run.day, phase:companyPhase(run.day), pressure, text:`D${run.day} · ${companyPhase(run.day)} · 오늘의 압박: ${pressure}`});
   if(mood.id!=='steady'&&((['cold','faction'].includes(mood.id)&&run.rng()<.45)||run.rng()<.18)) dayLog.push({type:'team',text:`<strong>오늘의 팀 공기 · ${mood.label}</strong><br>${mood.reason} <span class="muted">(업무 난도 ${mood.penalty>=0?'+':''}${mood.penalty}, 개인 사건 난도 ${mood.personalPenalty>=0?'+':''}${mood.personalPenalty})</span>`});
   shuffle(run.rng,run.npcs).slice(0,2).forEach(actor => applyAction(run,actor,chooseAction(run,actor,mood),pressure,dayLog,mood));
   applyTeamDailyRipple(run,mood,dayLog);
@@ -476,14 +528,6 @@ function resolvePendingEvent(choiceId) { const run=state.run; if(!run?.pendingEv
 function advanceAutomatically(run) { while(run.day<30&&!run.pendingEvent) simulateDay(run); render(); }
 function companyPhase(day) { return day<=5?'1막 · 온보딩':day<=13?'2막 · 적응과 협업':day<=22?'3막 · 공개 검증': '4막 · 평가와 결산'; }
 function relationLabel(e) { return relationshipStage(e); }
-function timelineTime(item,index) {
-  if(item.label==='일일 관계변화') return '18:40';
-  if(item.label==='오늘요약') return '18:30';
-  if(item.label==='관계변화') return '18:20';
-  if(item.label==='휴식') return '19:10';
-  const slots=['09:10','09:40','10:20','11:00','11:40','13:20','14:00','14:50','15:40','16:30','17:20','18:00'];
-  return slots[Math.min(index,slots.length-1)];
-}
 function render() {
   const run=state.run; const $=id=>document.getElementById(id); if(!run) return;
   const atmosphere=teamAtmosphere(run); const forecast=nextCompanyForecast(run); const workEffect=`업무 난도 ${atmosphere.penalty>=0?'+':''}${atmosphere.penalty}`; const personalEffect=`개인 난도 ${atmosphere.personalPenalty>=0?'+':''}${atmosphere.personalPenalty}`; const affinitySummary=run.npcs.filter(n=>n.affinityHook).map(n=>`${n.affinityHook.label}: ${n.name}`).join(' · '); $('runSetup').innerHTML=`<div class="setup-grid"><div class="setup-stat"><span>회차 시드</span><strong>${run.seed}</strong></div><div class="setup-stat"><span>이번 팀장</span><strong>${run.npcs.find(n=>n.id===run.leaderId).name}</strong></div><div class="setup-stat"><span>팀 분위기</span><strong>${atmosphere.label} · ${workEffect}</strong><span>${personalEffect} · ${atmosphere.reason}</span></div><div class="setup-stat"><span>플레이어 능력</span><strong>실무 ${run.player.skills.work} · 기획 ${run.player.skills.plan}</strong><span>화술 ${run.player.skills.talk} · 눈치 ${run.player.skills.sense} · 정보 ${run.player.insight}</span></div><div class="setup-stat"><span>이번 회차 호감 버프</span><strong>${affinitySummary}</strong><span>해당 인물은 특정 접점에서 친밀도가 더 오른다.</span></div></div>${forecast?`<div class="forecast-alert"><strong>예고 · D${forecast.day} ${forecast.title}</strong><span>중요할 것 같은 능력: ${forecast.req.map(skillName).join(' · ')}. ${forecast.hint}</span></div>`:''}`;
@@ -494,12 +538,12 @@ function render() {
   const core=run.npcs.filter(n=>n.kind==='핵심'); $('connectionCards').innerHTML=core.map(n=>`<button class="connection-card ${run.firstConnection===n.id?'active':''}" data-connection="${n.id}" ${run.day?'disabled':''}><strong>${n.name} · ${n.rank}</strong><span class="tagline">${n.traits.join(' · ')} · ${n.desire}</span></button>`).join('');
   document.querySelectorAll('[data-connection]').forEach(btn=>btn.onclick=()=>{run.firstConnection=btn.dataset.connection; run.npcs.find(n=>n.id===run.firstConnection).playerTrust=8; updateDisposition(run); document.getElementById('nextDayButton').disabled=false; document.getElementById('autoRunButton').disabled=false; document.getElementById('resetRunButton').disabled=false; render();});
   const tendency=updateDisposition(run); $('tendencyTitle').textContent=`현재 성향: ${tendency.name}`; $('tendencyHint').textContent=tendency.hint;
-  const pendingPanel=$('pendingEventPanel'); if(run.pendingEvent){ const pending=run.pendingEvent; const category=pending.event.required?'필수 회사 이벤트':pending.event.kind==='rest'?'휴식 이벤트':['personal','rumor'].includes(pending.event.kind)?'개인 이벤트':'회사 이벤트'; const req=eventRequirements(pending.event).map(skillName).join(' · '); pendingPanel.hidden=false; pendingPanel.innerHTML=`<p class="eyebrow">자동 진행 일시정지 · ${category}</p><h2>${pending.event.title}</h2><p class="event-copy">${pending.event.text}<br><strong>예상 필요 능력: ${req}</strong> · 업무 신뢰가 높은 전문 동료가 있으면 지원 가능</p><div class="event-options">${eventOptions(pending.event).map(o=>`<button data-event-choice="${o.id}"><strong>${o.label}</strong><small>${o.hint}</small></button>`).join('')}</div>`; document.querySelectorAll('[data-event-choice]').forEach(btn=>btn.onclick=()=>resolvePendingEvent(btn.datasetChoice||btn.dataset.eventChoice)); } else { pendingPanel.hidden=true; pendingPanel.innerHTML=''; }
+  const pendingPanel=$('pendingEventPanel'); if(run.pendingEvent){ const pending=run.pendingEvent; const category=pending.event.required?'필수 회사 이벤트':pending.event.kind==='rest'?'휴식 이벤트':['personal','rumor'].includes(pending.event.kind)?'개인 이벤트':'회사 이벤트'; const req=eventRequirements(pending.event).map(skillName).join(' · '); const pendChips=pending.event.actors.filter(Boolean).map(n=>npcChip(run,n)).join(''); pendingPanel.hidden=false; pendingPanel.innerHTML=`<p class="eyebrow">자동 진행 일시정지 · ${category}</p><h2>${pending.event.title}</h2><p class="event-copy">${pending.event.text}<br><strong>예상 필요 능력: ${req}</strong> · 업무 신뢰가 높은 전문 동료가 있으면 지원 가능</p>${pendChips?`<div class="pending-actors">${pendChips}</div>`:''}<div class="event-options">${eventOptions(pending.event).map(o=>`<button data-event-choice="${o.id}"><strong>${o.label}</strong><small>${o.hint}</small></button>`).join('')}</div>`; document.querySelectorAll('[data-event-choice]').forEach(btn=>btn.onclick=()=>resolvePendingEvent(btn.datasetChoice||btn.dataset.eventChoice)); } else { pendingPanel.hidden=true; pendingPanel.innerHTML=''; }
   $('nextDayButton').disabled=!run.firstConnection||!!run.pendingEvent||run.day>=30; $('autoRunButton').disabled=!run.firstConnection||!!run.pendingEvent||run.day>=30;
-  $('roster').innerHTML=run.npcs.slice().sort((a,b)=>a.rank.localeCompare(b.rank)).map(n=>`<div class="roster-item"><div><div class="rank">${n.rank}</div><div class="role">${n.job}</div></div><div><strong>${n.name}</strong><div class="role">${n.mbti} · ${n.enneagram} · 업무몰입 ${'●'.repeat(n.focus)}${n.affinityHook?` · 호감버프 ${n.affinityHook.label}`:''}</div></div><span class="traits">${n.affinityHook?n.affinityHook.label:n.traits[0]}</span></div>`).join('');
-  const important=Object.values(run.relations).sort((a,b)=>(b.tension+b.competition+b.affection+b.trust)-(a.tension+a.competition+a.affection+a.trust)).slice(0,8); $('relationshipList').innerHTML=important.map(e=>{const a=run.npcs.find(n=>n.id===e.a),b=run.npcs.find(n=>n.id===e.b); const tone=e.tension>=45?'hot':e.affection>=30?'warm':''; return `<div class="relation ${tone}"><div class="relation-name">${a.name} ↔ ${b.name} · ${relationLabel(e)}</div><div class="relation-numbers">신뢰 ${e.trust} · 친밀 ${e.affection} · 긴장 ${e.tension} · 경쟁 ${e.competition}</div></div>`;}).join('');
-  $('profilePanel').innerHTML=run.npcs.map(n=>{const k=run.player.knowledge[n.id]; const status=k.evidence>=6?'이해':k.evidence>=3?'추정':k.evidence>=1?'관찰':'첫인상'; const privacy=k.evidence>=4?`<br>공과사: ${({open:'열려 있음',private:'사적 표현 조심',strict:'구분 확실'})[n.boundary]} · 연애상태: ${({single:'비어 있음',unknown:'알 수 없음',partner:'만나는 사람 있음'})[n.availability]}`:''; const ideal=k.evidence>=6?`<br>이상형: ${n.idealText}`:''; const affinity=n.affinityHook?`<br>회차 버프: ${n.affinityHook.label} — ${n.affinityHook.desc}`:''; const detail=k.evidence>=6?`욕망: ${n.desire}<br>상처: ${n.wound}${privacy}${ideal}${affinity}`:k.evidence>=3?`성향: ${n.traits.join(' · ')}<br>단서 ${k.evidence}개${privacy}${affinity}`:k.evidence>=1?`최근 단서: ${k.notes.at(-1)}${affinity}`:`직무·직급만 알려져 있다.${affinity}`; return `<div class="profile-card"><strong>${n.name}</strong><span class="profile-status">${status}</span><div class="profile-detail">${detail}</div></div>`;}).join('');
-  $('eventLog').innerHTML=run.logs.length?run.logs.slice().reverse().map(day=>`<div class="log-day">${day.map((x,i)=>x.type==='title'?`<div class="log-title">${x.text}</div>`:`<div class="log-item ${x.type}"><span class="log-time">${timelineTime(x,i)}</span><span class="log-label">${logLabel(x)}</span><div class="log-copy">${x.text}</div></div>`).join('')}</div>`).join(''):'첫 인맥을 고르면 1일차부터 회사를 진행할 수 있습니다.';
+  $('roster').innerHTML=run.npcs.slice().sort((a,b)=>a.rank.localeCompare(b.rank)).map(n=>`<div class="roster-item"><div><div class="rank">${n.rank}</div><div class="role">${n.job}</div></div><div>${npcChip(run,n)}<div class="role">${n.mbti} · ${n.enneagram} · 업무몰입 ${'●'.repeat(n.focus)}${n.affinityHook?` · 호감버프 ${n.affinityHook.label}`:''}</div></div><span class="traits">${n.affinityHook?n.affinityHook.label:n.traits[0]}</span></div>`).join('');
+  const important=Object.values(run.relations).sort((a,b)=>(b.tension+b.competition+b.affection+b.trust)-(a.tension+a.competition+a.affection+a.trust)).slice(0,8); $('relationshipList').innerHTML=important.map(e=>{const a=run.npcs.find(n=>n.id===e.a),b=run.npcs.find(n=>n.id===e.b); const tone=e.tension>=45?'hot':e.affection>=30?'warm':''; return `<div class="relation ${tone}"><div class="relation-name">${npcChip(run,a)}<span class="muted">↔</span>${npcChip(run,b)}<span class="stage-tag">${relationLabel(e)}</span></div><div class="relation-numbers">신뢰 ${e.trust} · 친밀 ${e.affection} · 긴장 ${e.tension} · 경쟁 ${e.competition}</div></div>`;}).join('');
+  $('profilePanel').innerHTML=run.npcs.map(n=>{const k=run.player.knowledge[n.id]; const status=k.evidence>=6?'이해':k.evidence>=3?'추정':k.evidence>=1?'관찰':'첫인상'; const privacy=k.evidence>=4?`<br>공과사: ${({open:'열려 있음',private:'사적 표현 조심',strict:'구분 확실'})[n.boundary]} · 연애상태: ${({single:'비어 있음',unknown:'알 수 없음',partner:'만나는 사람 있음'})[n.availability]}`:''; const ideal=k.evidence>=6?`<br>이상형: ${n.idealText}`:''; const affinity=n.affinityHook?`<br>회차 버프: ${n.affinityHook.label} — ${n.affinityHook.desc}`:''; const detail=k.evidence>=6?`욕망: ${n.desire}<br>상처: ${n.wound}${privacy}${ideal}${affinity}`:k.evidence>=3?`성향: ${n.traits.join(' · ')}<br>단서 ${k.evidence}개${privacy}${affinity}`:k.evidence>=1?`최근 단서: ${k.notes.at(-1)}${affinity}`:`직무·직급만 알려져 있다.${affinity}`; return `<div class="profile-card">${npcChip(run,n)}<span class="profile-status">${status}</span><div class="profile-detail">${detail}</div></div>`;}).join('');
+  $('eventLog').innerHTML=run.logs.length?run.logs.slice().reverse().map(day=>dayCardHtml(run,day)).join(''):'첫 인맥을 고르면 1일차부터 회사를 진행할 수 있습니다.';
   const panel=$('summaryPanel'); if(run.day===30){ const ending=resolveEnding(run); const {closest,support}=ending; const changes=majorRelationChanges(run); panel.hidden=false; panel.innerHTML=`<p class="eyebrow">30일 조합 결산</p><h2>커리어·개인관계·연애·화제가 함께 이번 회차를 만듭니다</h2><div class="summary-grid"><div class="summary-card"><span>커리어</span><strong>${ending.career.title}</strong><div class="muted">${ending.career.body}</div></div><div class="summary-card"><span>개인관계</span><strong>${ending.personal.title}</strong><div class="muted">${ending.personal.body}</div></div><div class="summary-card"><span>연애·화제</span><strong>${ending.romance.title}</strong><div class="muted">${ending.romance.body}</div></div></div><div class="summary-grid"><div class="summary-card"><span>가장 가까운 동료</span><strong>${closest.slice(0,3).map(n=>n.name).join(', ')}</strong><div class="muted">${support.name?`${support.name} → ${support.stat} 지원 +${support.value}`:'가까워도 업무 신뢰가 낮으면 사건 지원은 불가'}</div></div><div class="summary-card"><span>플레이어 능력</span><strong>실무 ${run.player.skills.work} · 기획 ${run.player.skills.plan} · 화술 ${run.player.skills.talk} · 눈치 ${run.player.skills.sense}</strong><div class="muted">성공 ${run.player.outcomes.success} / 실패 ${run.player.outcomes.failure}</div></div><div class="summary-card"><span>플레이어가 남긴 영향</span><strong>직접 개입 ${impacts.filter(i=>i.kind==='action'||i.kind==='choice').length}회</strong><div class="muted">${support.name?`${support.name}와 업무 신뢰를 쌓아 ${support.stat} 지원을 얻음`:'전문 동료에게 업무 질문·도움을 주어 업무 신뢰를 쌓을 수 있음'}</div></div></div><div class="divider"></div><p class="eyebrow">중요 관계 변화</p>${changes.length?changes.map(c=>`<div class="relation ${c.to.includes('긴장')?'hot':'warm'}"><div class="relation-name">${c.a.name} ↔ ${c.b.name}: ${c.from} → ${c.to}</div><div class="relation-numbers">변화량 ${c.delta} · 마지막 계기: ${c.history||'누적된 상호작용'}</div></div>`).join(''):'<p class="muted">이번 회차에는 큰 관계 전환이 없었습니다.</p>'}`;} else panel.hidden=true;
 }
 

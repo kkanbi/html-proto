@@ -38,7 +38,7 @@
 
       <section class="panel pending-event" id="pendingEventPanel" hidden></section>
 
-      <section class="dashboard">
+      <section class="game-grid">
         <article class="panel log-panel">
           <div class="panel-heading">
             <div><p class="eyebrow">회사 일지</p><h2 id="dayTitle">회사를 생성해 주세요</h2></div>
@@ -47,32 +47,36 @@
           <div id="eventLog" class="event-log empty-state">새 회사를 만들면 이곳에 하루 단위의 행동과 사건이 기록됩니다.</div>
         </article>
 
-        <article class="panel">
-          <div class="panel-heading"><div><p class="eyebrow">현재 조직</p><h2>팀장과 사수</h2></div></div>
-          <div id="authorityPanel" class="authority-panel empty-state">아직 배정되지 않았습니다.</div>
-          <div class="divider"></div>
-          <div class="panel-heading"><div><p class="eyebrow">플레이어 영향</p><h2>내가 바꾼 것</h2></div></div>
-          <div id="playerImpactPanel" class="authority-panel empty-state">직접 개입하거나 사건을 겪으면 영향이 요약됩니다.</div>
-          <div class="divider"></div>
-          <div class="panel-heading"><div><p class="eyebrow">첫 인맥</p><h2>핵심 NPC 카드</h2></div></div>
-          <div id="connectionCards" class="connection-cards empty-state">회사를 생성하면 첫 인맥을 선택할 수 있습니다.</div>
-        </article>
-      </section>
+        <aside class="side-col">
+          <details class="panel side-panel" open>
+            <summary><div><p class="eyebrow">조직</p><h2>팀장·사수와 첫 인맥</h2></div><span class="chev">▶</span></summary>
+            <div class="side-body">
+              <div id="authorityPanel" class="authority-panel empty-state">아직 배정되지 않았습니다.</div>
+              <div class="divider"></div>
+              <p class="eyebrow">첫 인맥</p>
+              <div id="connectionCards" class="connection-cards empty-state">회사를 생성하면 첫 인맥을 선택할 수 있습니다.</div>
+              <div class="divider"></div>
+              <p class="eyebrow">플레이어 영향</p>
+              <div id="playerImpactPanel" class="authority-panel empty-state">직접 개입하거나 사건을 겪으면 영향이 요약됩니다.</div>
+            </div>
+          </details>
 
-      <section class="dashboard lower-dashboard">
-        <article class="panel">
-          <div class="panel-heading"><div><p class="eyebrow">구성원</p><h2>이번 회차의 오피스</h2></div></div>
-          <div id="roster" class="roster"></div>
-        </article>
-        <article class="panel">
-          <div class="panel-heading"><div><p class="eyebrow">관계망</p><h2>중요 관계</h2></div></div>
-          <div id="relationshipList" class="relationship-list empty-state">회사를 생성하면 시작 관계와 변화가 표시됩니다.</div>
-        </article>
-      </section>
-
-      <section class="panel profile-panel">
-        <div class="panel-heading"><div><p class="eyebrow">관찰 기록</p><h2>NPC 프로필 해금</h2></div></div>
-        <div id="profilePanel" class="profile-grid empty-state">사건을 겪고 NPC를 관찰하면, 성격·욕망·상처에 대한 정보가 단계적으로 해금됩니다.</div>
+          <div class="panel npc-panel">
+            <div class="panel-heading"><div><p class="eyebrow">NPC 정보</p><h2>이번 회차의 사람들</h2></div></div>
+            <details class="npc-section" open>
+              <summary>구성원 <span class="chev">▶</span></summary>
+              <div class="section-body"><div id="roster" class="roster"></div></div>
+            </details>
+            <details class="npc-section">
+              <summary>관계망 <span class="chev">▶</span></summary>
+              <div class="section-body"><div id="relationshipList" class="relationship-list empty-state">회사를 생성하면 시작 관계와 변화가 표시됩니다.</div></div>
+            </details>
+            <details class="npc-section">
+              <summary>프로필 해금 <span class="chev">▶</span></summary>
+              <div class="section-body"><div id="profilePanel" class="profile-grid empty-state">사건을 겪고 NPC를 관찰하면, 성격·욕망·상처 정보가 단계적으로 해금됩니다.</div></div>
+            </details>
+          </div>
+        </aside>
       </section>
 
       <section class="panel summary-panel" id="summaryPanel" hidden></section>
