@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="version" content="0.3.1">
+    <meta name="description" content="소설 작성 전문 웹 애플리케이션">
+    <title>소설 작성기 v0.3.1</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&family=Pretendard:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 왼쪽: 회차 목록 -->
+        <aside class="episodes-section">
+            <div class="left-panel">
+                <div class="panel-header">작품 설정</div>
+                <div class="project-info">
+                    <input type="text" class="project-title-input" id="projectTitle" placeholder="작품 제목">
+                    <div class="project-row">
+                        <span class="project-label">현재</span>
+                        <select class="volume-select" id="currentVolume"></select>
+                        <span class="project-label">총</span>
+                        <input type="number" class="project-input" id="totalVolumes" value="1" min="1" max="99">
+                        <span class="project-label">권</span>
+                    </div>
+                    <div class="project-row">
+                        <span class="project-label">권당 목표</span>
+                        <input type="number" class="project-input" id="volumeGoal" value="100000" step="10000" style="width: 80px;">
+                        <span class="project-label">자</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="left-panel episodes-panel">
+                <div class="panel-header">
+                    <span>회차 목록</span>
+                    <span class="badge" id="episodeCount">0/0화</span>
+                </div>
+                <div class="episodes-list" id="episodesList"></div>
+                <button class="add-episode-btn" id="addEpisodeBtn">+ 새 회차 추가</button>
+                <div class="progress-section">
+                    <div class="progress-row">
+                        <span class="progress-label">이번 권 진행</span>
+                        <span class="progress-value" id="volumeProgress">0 / 100,000자</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="left-panel">
+                <div class="action-buttons">
+                    <div class="btn-row">
+                        <button class="btn btn-secondary" id="btnSaveDrive">☁️ 저장</button>
+                        <button class="btn btn-secondary" id="btnLoadDrive">📂 열기</button>
+                    </div>
+                    <button class="btn btn-secondary" id="btnNewVolume">📖 새 권 만들기</button>
+                    <button class="btn btn-secondary" id="btnDownload" style="font-size: 11px;">💾 로컬 다운로드</button>
+                    <button class="btn btn-secondary" id="btnExportText" style="font-size: 11px;">📝 텍스트 내보내기</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 가운데: 에디터 -->
+        <section class="editor-section">
+            <div class="editor-header">
+                <span class="episode-num-display" id="episodeNumDisplay">1화</span>
+                <input type="text" class="title-input" id="episodeTitle" placeholder="회차 제목을 입력하세요...">
+                <span class="save-status" id="saveStatus">저장됨</span>
+            </div>
+            
+            <div class="editor-wrapper">
+                <textarea class="editor" id="episodeContent" placeholder="이곳에 소설을 작성하세요..."></textarea>
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <span>공백 포함</span>
+                        <span class="stat-value" id="charWithSpaces">0</span>
+                        <span>자</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>공백 제외</span>
+                        <span class="stat-value" id="charWithoutSpaces">0</span>
+                        <span>자</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>원고지</span>
+                        <span class="stat-value" id="manuscriptPages">0</span>
+                        <span>매</span>
+                    </div>
+                    <button class="btn btn-secondary" id="btnToggleHighlight" title="문장 길이 하이라이트" style="margin-left: auto; padding: 4px 12px; font-size: 11px;">💡 하이라이트</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 오른쪽: 설정/작품배경/퇴고 -->
+        <aside class="right-section">
+            <div class="main-tabs">
+                <button class="main-tab active" data-main-tab="settings">
+                    <span class="main-tab-icon">⚙️</span>
+                    <span>설정</span>
+                </button>
+                <button class="main-tab" data-main-tab="story">
+                    <span class="main-tab-icon">📚</span>
+                    <span>작품 배경</span>
+                </button>
+                <button class="main-tab" data-main-tab="dashboard">
+                    <span class="main-tab-icon">📊</span>
+                    <span>대시보드</span>
+                </button>
+                <button class="main-tab" data-main-tab="review">
+                    <span class="main-tab-icon">✏️</span>
+                    <span>퇴고</span>
+                </button>
+            </div>
+
+            <!-- 설정 탭 -->
+            <div class="main-tab-content active" data-main-content="settings">
+                <div class="panel-header">Google Drive</div>
+                <div class="google-panel">
+                    <div class="google-status" id="googleStatus">
+                        <span class="google-status-icon" id="googleStatusIcon"></span>
+                        <div>
+                            <div class="google-status-text" id="googleStatusText">연결되지 않음</div>
+                            <div class="google-email" id="googleEmail"></div>
+                        </div>
+                    </div>
+                    <button class="btn-google" id="btnGoogleAuth">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        </svg>
+                        Google 로그인
+                    </button>
+                    <div class="drive-folder-row" id="driveFolderRow" style="display:none;">
+                        <span class="drive-folder-icon">📁</span>
+                        <span class="drive-folder-name" id="driveFolderName">소설작성기</span>
+                        <button class="btn-folder-change" id="btnChangeDriveFolder">변경</button>
+                    </div>
+                </div>
+
+                <div class="panel-header">로컬 폴더</div>
+                <div class="local-folder-panel">
+                    <div class="local-folder-status">
+                        <span class="local-folder-icon">📁</span>
+                        <span class="local-folder-name" id="localFolderName">선택된 폴더 없음</span>
+                    </div>
+                    <button class="btn btn-secondary" id="btnSelectLocalFolder" style="width:100%; margin-top:8px;">📁 폴더 선택</button>
+                    <div class="local-folder-actions" id="localFolderActions" style="display:none; margin-top:8px;">
+                        <button class="btn btn-secondary" id="btnSaveLocal">💾 저장</button>
+                        <button class="btn btn-secondary" id="btnLoadLocal">📂 열기</button>
+                    </div>
+                </div>
+
+                <div class="panel-header">화면 설정</div>
+                <div class="theme-font-settings">
+                    <div class="setting-row">
+                        <span class="setting-label">집중 모드</span>
+                        <button class="toggle-btn" id="btnFocusMode">F11</button>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-label">테마</span>
+                        <div class="toggle-buttons">
+                            <button class="toggle-btn active" id="btnDark">다크</button>
+                            <button class="toggle-btn" id="btnLight">라이트</button>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-label">본문 폰트</span>
+                        <select class="font-select" id="fontSelect">
+                            <option value="nanum">나눔명조</option>
+                            <option value="gungseo">궁서체</option>
+                            <option value="malgun">맑은고딕</option>
+                            <option value="batang">바탕체</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 작품 배경 탭 -->
+            <div class="main-tab-content" data-main-content="story">
+                <div class="sub-tabs">
+    			<button class="sub-tab active" data-sub-tab="core">코어</button>
+    			<button class="sub-tab" data-sub-tab="characters">캐릭터</button>
+   			 <button class="sub-tab" data-sub-tab="world">세계관</button>
+    			<button class="sub-tab" data-sub-tab="treatment">트리트먼트</button>
+		</div>
+                
+                <!-- 코어 (탭 구조) -->
+                <div class="sub-tab-content active" data-sub-content="core">
+                    <div class="core-tabs">
+                        <button class="core-tab active" data-core-tab="overview">작품개요</button>
+                        <button class="core-tab" data-core-tab="theme">주제/기획의도</button>
+                        <button class="core-tab" data-core-tab="full-plot">전권 줄거리</button>
+                        <button class="core-tab" data-core-tab="volume-plot">권별 줄거리</button>
+                    </div>
+                    
+                    <!-- 작품개요 -->
+                    <div class="core-tab-content active" data-core-content="overview">
+                        <div style="padding: 14px; display: flex; flex-direction: column; gap: 14px;">
+                            <div class="core-field">
+                                <div class="core-field-label">로그라인</div>
+                                <textarea class="core-field-textarea" id="coreLogline" placeholder="작품을 한 문장으로 표현하세요...&#10;&#10;예: 10년마다 갱신되는 계약 결혼 사회에서, 9년차 부부가 진짜 사랑을 발견하는 이야기" style="min-height: 100px;"></textarea>
+                            </div>
+                            <div class="core-field">
+                                <div class="core-field-label">장르</div>
+                                    <select class="core-field-input" id="coreGenre" style="cursor: pointer;">
+                                        <option value="">선택 안 함</option>
+                                        <option value="판타지">판타지</option>
+                                        <option value="현대판타지">현대판타지</option>
+                                        <option value="로맨스">로맨스</option>
+                                        <option value="로맨스판타지">로맨스판타지</option>
+                                        <option value="무협">무협</option>
+                                        <option value="SF">SF</option>
+                                        <option value="현대">현대</option>
+                                        <option value="역사">역사</option>
+                                        <option value="호러">호러</option>
+                                        <option value="미스터리">미스터리</option>
+                                        <option value="기타">기타</option>
+                                    </select>
+                                </div>
+                            <div class="core-field">
+                                <div class="core-field-label">핵심 키워드</div>
+                                <input type="text" class="core-field-input" id="coreKeywords" placeholder="예: 계약결혼, 감정의 진정성, 선택의 자유">
+                            </div>
+                            <div class="core-field">
+                                <div class="core-field-label">주요 배경</div>
+                                <textarea class="core-field-textarea" id="coreBackground" placeholder="작품의 시공간적 배경을 작성하세요..."></textarea>
+                            </div>
+                            <div class="core-field">
+                                <div class="core-field-label">작품 톤앤매너</div>
+                                <textarea class="core-field-textarea" id="coreTone" placeholder="작품의 분위기, 문체, 감정적 톤을 설명하세요...&#10;&#10;예: 관찰적이고 사색적인 톤, 판단하지 않고 인물을 바라보는 시선"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 주제 및 기획의도 -->
+                    <div class="core-tab-content" data-core-content="theme">
+                        <textarea class="setting-textarea" id="coreTheme" placeholder="작품의 주제와 기획의도를 작성하세요...&#10;&#10;- 무엇을 말하고 싶은가?&#10;- 왜 이 이야기를 쓰는가?&#10;- 독자에게 어떤 질문을 던지고 싶은가?"></textarea>
+                    </div>
+                    
+                    <!-- 전권 줄거리 -->
+                    <div class="core-tab-content" data-core-content="full-plot">
+                        <textarea class="setting-textarea" id="coreFullPlot" placeholder="작품 전체의 큰 줄거리를 작성하세요..."></textarea>
+                    </div>
+                    
+                    <!-- 권별 줄거리 -->
+                    <div class="core-tab-content" data-core-content="volume-plot">
+                        <div class="accordion-container" id="volumePlotAccordion">
+                            <!-- 권별 줄거리는 JS로 동적 생성 -->
+                        </div>
+                        <div style="padding: 0 10px 10px 10px;">
+                            <button class="accordion-add-btn" id="addVolumePlot">+ 권별 줄거리 추가</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 캐릭터 (카드 그리드) -->
+                <div class="sub-tab-content" data-sub-content="characters">
+                    <div class="character-grid" id="characterGrid"></div>
+                </div>
+                
+                <!-- 세계관 (아코디언) -->
+                <div class="sub-tab-content" data-sub-content="world">
+                    <div class="world-header">
+                        <div class="world-tags" id="worldTags">
+                            <!-- 태그들이 여기에 동적으로 추가됨 -->
+                        </div>
+                    </div>
+                    <div class="accordion-container" id="worldAccordion">
+                        <!-- 세계관 항목들이 여기에 동적으로 추가됨 -->
+                    </div>
+                    <div style="padding: 0 10px 10px 10px;">
+                        <button class="accordion-add-btn" id="addWorldSection">+ 항목 추가</button>
+                    </div>
+                </div>
+                
+                <!-- 트리트먼트 (씬 카드 뷰) -->
+                <div class="sub-tab-content" data-sub-content="treatment">
+                    <div class="tree-container" id="treatmentTree">
+                        <!-- 씬 카드들이 여기에 동적으로 추가됨 -->
+                    </div>
+                    <div style="padding: 0 10px 10px 10px;">
+                        <button class="tree-add-btn" id="addTreatmentPart">+ 부 추가</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 대시보드 탭 -->
+            <div class="main-tab-content" data-main-content="dashboard">
+                <div class="panel-header">작성 통계</div>
+                <div class="dashboard-section">
+                    <div class="stat-card">
+                        <div class="stat-card-label">오늘 작성</div>
+                        <div class="stat-card-value" id="todayWords">0</div>
+                        <div class="stat-card-unit">자</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">이번 주</div>
+                        <div class="stat-card-value" id="weekWords">0</div>
+                        <div class="stat-card-unit">자</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">이번 달</div>
+                        <div class="stat-card-value" id="monthWords">0</div>
+                        <div class="stat-card-unit">자</div>
+                    </div>
+                </div>
+
+                <div class="panel-header">주간 활동</div>
+                <div class="dashboard-section">
+                    <div class="heatmap-container" id="weeklyHeatmap">
+                        <!-- 주간 히트맵 -->
+                    </div>
+                </div>
+
+                <div class="panel-header">회차 완성도</div>
+                <div class="dashboard-section">
+                    <div class="episode-progress-list" id="episodeProgressList">
+                        <!-- 회차별 진행률 -->
+                    </div>
+                </div>
+
+                <div class="panel-header">자주 쓴 단어</div>
+                <div class="dashboard-section">
+                    <div class="word-cloud" id="wordCloud">
+                        <!-- 단어 클라우드 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 퇴고 탭 -->
+            <div class="main-tab-content" data-main-content="review">
+                <!-- AI 설정 아코디언 -->
+                <div class="review-accordion" id="reviewSettingsAccordion">
+                    <div class="review-accordion-header" id="reviewAccordionToggle">
+                        <span>⚙️ AI 모델 설정 / 검토 옵션</span>
+                        <span class="review-accordion-icon">▼</span>
+                    </div>
+                    <div class="review-accordion-body" id="reviewAccordionBody">
+                        <div class="api-panel">
+                            <div class="api-input-group">
+                                <label class="api-label">모델</label>
+                                <select class="api-input" id="aiModelSelect" style="cursor:pointer;">
+                                    <option value="claude">Claude (Sonnet 4.6)</option>
+                                    <option value="gemini">Gemini 2.5 Flash</option>
+                                </select>
+                            </div>
+                            <div class="api-input-group" id="claudeKeyRow">
+                                <label class="api-label">Claude Key</label>
+                                <input type="password" class="api-input" id="apiKey" placeholder="sk-ant-...">
+                                <div class="api-status" id="apiStatus">API 키를 입력하세요</div>
+                            </div>
+                            <div class="api-input-group" id="geminiKeyRow" style="display:none;">
+                                <label class="api-label">Gemini Key</label>
+                                <input type="password" class="api-input" id="geminiApiKey" placeholder="AIza...">
+                                <div class="api-status" id="geminiApiStatus">API 키를 입력하세요</div>
+                            </div>
+                        </div>
+
+                        <div class="panel-header review-subheader">검토 옵션</div>
+                        <div class="check-options-inline">
+                            <label class="check-option-inline">
+                                <input type="checkbox" id="checkSpelling" checked>
+                                <span>맞춤법</span>
+                            </label>
+                            <label class="check-option-inline">
+                                <input type="checkbox" id="checkAwkward" checked>
+                                <span>어색한 문장</span>
+                            </label>
+                            <label class="check-option-inline">
+                                <input type="checkbox" id="checkConsistency" checked>
+                                <span>설정 일관성</span>
+                            </label>
+                            <label class="check-option-inline">
+                                <input type="checkbox" id="checkRepetition">
+                                <span>반복 표현</span>
+                            </label>
+                            <label class="check-option-inline">
+                                <input type="checkbox" id="checkFlow">
+                                <span>문장 흐름</span>
+                            </label>
+                        </div>
+
+                        <div class="panel-header review-subheader">자유 질문 <span style="font-weight:400;font-size:11px;opacity:0.6;">(입력 시 체크박스 대신 사용)</span></div>
+                        <div style="padding: 10px 14px 14px;">
+                            <textarea id="customQuestion" class="api-input" rows="3" placeholder="예) 이 장면에서 주인공의 감정선이 자연스럽게 표현됐나요?" style="resize:vertical;width:100%;box-sizing:border-box;font-size:12px;padding:6px 8px;"></textarea>
+                        </div>
+
+                        <div class="usage-info">
+                            <div class="usage-row">
+                                <span>💰 이번 예상</span>
+                                <span id="estimatedCost">-</span>
+                            </div>
+                            <div class="usage-row">
+                                <span>📊 누적 사용</span>
+                                <span id="totalUsage">$0.00 (0회)</span>
+                            </div>
+                            <button class="btn-reset-usage" id="btnResetUsage" title="사용량 초기화">사용량 리셋</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="btnAiCheck">🤖 검토 요청</button>
+                </div>
+
+                <div class="result-section">
+                    <div class="result-header">
+                        검토 결과
+                        <button class="btn-reset-review" id="btnResetReview" title="검토 결과 초기화">Reset</button>
+                    </div>
+                    <div class="result-content empty" id="aiResult">검토 결과가 여기에 표시됩니다</div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- 캐릭터 편집 모달 -->
+    <div class="character-modal" id="characterModal">
+        <div class="character-modal-content">
+            <div class="character-modal-header">
+                <div class="character-modal-avatar" id="charModalAvatar">
+                    <span id="charModalAvatarEmoji">🧑</span>
+                    <div class="emoji-picker" id="emojiPicker">
+                        <div class="emoji-grid">
+                            <span class="emoji-item">🧑</span>
+                            <span class="emoji-item">👨</span>
+                            <span class="emoji-item">👩</span>
+                            <span class="emoji-item">👴</span>
+                            <span class="emoji-item">👵</span>
+                            <span class="emoji-item">👦</span>
+                            <span class="emoji-item">👧</span>
+                            <span class="emoji-item">👶</span>
+                            <span class="emoji-item">🧒</span>
+                            <span class="emoji-item">👱</span>
+                            <span class="emoji-item">🧔</span>
+                            <span class="emoji-item">👸</span>
+                            <span class="emoji-item">🤴</span>
+                            <span class="emoji-item">🧙</span>
+                            <span class="emoji-item">🧝</span>
+                            <span class="emoji-item">🧛</span>
+                            <span class="emoji-item">🧟</span>
+                            <span class="emoji-item">🦸</span>
+                            <span class="emoji-item">🦹</span>
+                            <span class="emoji-item">🥷</span>
+                            <span class="emoji-item">👼</span>
+                            <span class="emoji-item">😈</span>
+                            <span class="emoji-item">🤖</span>
+                            <span class="emoji-item">👽</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="character-modal-title">
+                    <input type="text" class="character-modal-name" id="charModalName" placeholder="캐릭터 이름">
+                    <select class="character-modal-role" id="charModalRole">
+                        <option value="주인공">주인공</option>
+                        <option value="히로인">히로인</option>
+                        <option value="조력자">조력자</option>
+                        <option value="악역">악역</option>
+                        <option value="조연">조연</option>
+                        <option value="기타">기타</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="character-modal-tabs">
+                <button class="character-modal-tab active" data-char-tab="basic">기본</button>
+                <button class="character-modal-tab" data-char-tab="personality">성격/속내</button>
+                <button class="character-modal-tab" data-char-tab="appearance">외형</button>
+                <button class="character-modal-tab" data-char-tab="relations">관계</button>
+            </div>
+            
+            <div class="character-modal-body">
+                <div class="character-tab-content active" data-char-content="basic">
+                    <div class="character-field">
+                        <div class="character-field-label">나이</div>
+                        <input type="text" class="character-field-input" id="charAge" placeholder="예: 25세">
+                    </div>
+                    <div class="character-field">
+                        <div class="character-field-label">직업/신분</div>
+                        <input type="text" class="character-field-input" id="charJob" placeholder="예: 대학원생, 왕자">
+                    </div>
+                    <div class="character-field">
+                        <div class="character-field-label">배경</div>
+                        <textarea class="character-field-textarea" id="charBackground" placeholder="캐릭터의 과거, 출신 등..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="character-tab-content" data-char-content="personality">
+                    <div class="character-field">
+                        <div class="character-field-label">성격/성향/특징</div>
+                        <textarea class="character-field-textarea" id="charPersonality" placeholder="예: 내성적, 책임감 강함..."></textarea>
+                    </div>
+                    <div class="character-field">
+                        <div class="character-field-label">행동 패턴</div>
+                        <textarea class="character-field-textarea" id="charBehavior" placeholder="예: 긴장하면 머리를 긁는다..."></textarea>
+                    </div>
+                    <div class="character-field">
+                        <div class="character-field-label">속내/비밀</div>
+                        <textarea class="character-field-textarea" id="charInner" placeholder="겉으로 드러나지 않는 진심..."></textarea>
+                    </div>
+                    <div class="character-field">
+                        <div class="character-field-label">심리/의도 변화</div>
+                        <textarea class="character-field-textarea" id="charPsychologyChange" placeholder="이야기 진행에 따른 심리적 변화, 의도의 변화..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="character-tab-content" data-char-content="appearance">
+                    <div class="character-field">
+                        <div class="character-field-label">신체</div>
+                        <input type="text" class="character-field-input" id="charBody" placeholder="예: 키 175cm, 마른 체형">
+                    </div>
+                    <div class="character-field">
+                        <div class="character-field-label">얼굴/인상</div>
+                        <textarea class="character-field-textarea" id="charFace" placeholder="예: 날카로운 눈매, 검은 머리..."></textarea>
+                    </div>
+                    <div class="character-field">
+                        <div class="character-field-label">특징</div>
+                        <textarea class="character-field-textarea" id="charFeature" placeholder="예: 왼쪽 귀에 피어싱, 흉터..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="character-tab-content" data-char-content="relations">
+                    <div class="character-field">
+                        <div class="character-field-label">가족</div>
+                        <textarea class="character-field-textarea" id="charFamily" placeholder="예: 어머니와 단둘이 생활..."></textarea>
+                    </div>
+                    <div class="character-field">
+                        <div class="character-field-label">친구/동료</div>
+                        <textarea class="character-field-textarea" id="charFriends" placeholder="예: 소꿉친구 영희와 친함..."></textarea>
+                    </div>
+                    <div class="character-field">
+                        <div class="character-field-label">적대 관계</div>
+                        <textarea class="character-field-textarea" id="charEnemies" placeholder="예: 라이벌 민수와 경쟁..."></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="character-modal-footer">
+                <button class="btn btn-danger" id="charModalDelete">삭제</button>
+                <div style="flex: 1;"></div>
+                <button class="btn btn-secondary" id="charModalAIGenerate">🤖 AI 자동생성</button>
+                <button class="btn btn-secondary" id="charModalCancel">취소</button>
+                <button class="btn btn-primary" id="charModalSave">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 파일 선택 모달 -->
+    <div class="modal-overlay" id="fileModal">
+        <div class="modal">
+            <h3 id="fileModalTitle">📂 Google Drive에서 열기</h3>
+            <div class="modal-file-list" id="modalFileList">
+                <div class="modal-empty">파일을 불러오는 중...</div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" id="btnModalCancel">취소</button>
+                <button class="btn btn-primary" id="btnModalOpen" disabled>열기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 텍스트 내보내기 모달 -->
+    <div class="modal-overlay" id="exportModal">
+        <div class="modal">
+            <h3>📝 텍스트 내보내기</h3>
+            <div style="margin-bottom: 16px;">
+                <label style="display:block; margin-bottom: 8px; font-weight: 600; font-size: 13px;">내보낼 범위</label>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+                        <input type="radio" name="exportScope" value="volume" checked> 1권 전체 (하나의 파일)
+                    </label>
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+                        <input type="radio" name="exportScope" value="episodes"> 회차별 개별 파일
+                    </label>
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+                        <input type="radio" name="exportScope" value="select"> 회차 선택
+                    </label>
+                </div>
+            </div>
+            <div id="exportEpisodeList" style="display:none; max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin-bottom: 16px;"></div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" id="btnExportCancel">취소</button>
+                <button class="btn btn-primary" id="btnExportConfirm">내보내기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 드라이브 폴더 선택 모달 -->
+    <div class="modal-overlay" id="folderPickerModal">
+        <div class="modal">
+            <h3>📁 저장 폴더 선택</h3>
+            <div class="modal-file-list" id="folderPickerList">
+                <div class="modal-empty">폴더를 불러오는 중...</div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" id="btnFolderNew">+ 새 폴더</button>
+                <div style="flex:1;"></div>
+                <button class="btn btn-secondary" id="btnFolderCancel">취소</button>
+                <button class="btn btn-primary" id="btnFolderSelect" disabled>선택</button>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>

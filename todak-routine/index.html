@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#fff9f0" />
+    <meta
+      name="description"
+      content="토닥루틴도우미 | 오늘 수유, 수면, 이유식 흐름을 가볍게 계산하고 기록은 토닥루틴에서 이어가는 육아 루틴 서비스"
+    />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icons/app-icon-192.png" />
+    <link rel="apple-touch-icon" href="./icons/app-icon-192.png" />
+    <style>
+      :root {
+        color-scheme: light;
+        background: #fff9f0;
+      }
+
+      body {
+        margin: 0;
+        background: #fff9f0;
+      }
+
+      #launch-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: #fff9f0;
+        transition: opacity 240ms ease, visibility 240ms ease;
+      }
+
+      #launch-splash.is-hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .launch-splash-image {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+        object-position: center;
+        image-rendering: pixelated;
+      }
+    </style>
+    <title>토닥루틴도우미</title>
+    <script type="module" crossorigin src="./assets/index-B9YxR52m.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BBtnVZKz.css">
+  </head>
+  <body>
+    <div id="launch-splash" aria-hidden="true">
+      <img
+        class="launch-splash-image"
+        src="./brand/todak-babylog-splash.png"
+        alt=""
+      />
+    </div>
+    <div id="root"></div>
+    <script>
+      (function () {
+        const splash = document.getElementById("launch-splash");
+        if (!splash) return;
+
+        let removed = false;
+        const removeSplash = function () {
+          if (removed) return;
+          removed = true;
+          splash.classList.add("is-hidden");
+          window.setTimeout(function () {
+            splash.remove();
+          }, 260);
+        };
+
+        window.addEventListener("todak:app-ready", removeSplash, { once: true });
+        window.setTimeout(removeSplash, 2400);
+      })();
+    </script>
+  </body>
+</html>
