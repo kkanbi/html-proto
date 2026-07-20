@@ -17,6 +17,14 @@ function shuffle(rng, items) { return [...items].sort(() => rng() - .5); }
 function pairKey(a,b) { return [a,b].sort().join('|'); }
 function other(run, id) { return run.npcs.filter(n => n.id !== id); }
 function edge(run,a,b) { return run.relations[pairKey(a.id || a,b.id || b)]; }
+function weightedTarget(run, actor) {
+  const candidates = other(run, actor.id);
+  const weights = candidates.map(n => { const e = edge(run,actor,n); const momentum = Math.abs(e.affection)+Math.abs(e.tension)+Math.abs(e.competition)+Math.abs(e.trust); return 1 + momentum/40; });
+  const total = weights.reduce((a,b)=>a+b,0);
+  let roll = run.rng()*total;
+  for (let i=0;i<candidates.length;i++){ roll -= weights[i]; if (roll<=0) return candidates[i]; }
+  return candidates[candidates.length-1];
+}
 function clamp(v,min,max) { return Math.max(min,Math.min(max,v)); }
 function randomAvailability(rng) { const roll=rng(); return roll<.55?'single':roll<.78?'unknown':'partner'; }
 const AFFINITY_HOOKS = [
@@ -53,8 +61,8 @@ function createRun(seed) {
   const npcs = NPCS.map(n => ({...n, availability:randomAvailability(rng), affinityHook:null, rank:'사원', stress:Math.floor(rng()*15), playerTrust:0, playerCloseness:0 }));
   const leader = pick(rng, npcs.filter(n => n.leader));
   leader.rank = '팀장';
-  const mentor = pick(rng, npcs.filter(n => n.id !== leader.id && n.ranks.includes('대리')));
-  mentor.rank = '대리 · 사수';
+  const mentor = pick(rng, npcs.filter(n => n.id !== leader.id && (n.ranks.includes('대리') || n.ranks.includes('주임'))));
+  mentor.rank = `${mentor.ranks[mentor.ranks.length-1]} · 사수`;
   const remaining = shuffle(rng, npcs.filter(n => n.id !== leader.id && n.id !== mentor.id));
   remaining.slice(0,2).forEach(n => n.rank = n.ranks.includes('대리') && rng()>.45 ? '대리' : '주임');
   remaining.slice(2).forEach(n => n.rank = '사원');
@@ -113,8 +121,8 @@ function romanceReadiness(run,npc) {
 }
 function assignInitialRelations(run) {
   const used=[];
-  for(let i=0;i<2;i++){ const [a,b]=randomPair(run,used); const e=edge(run,a,b); change(e,{trust:28,affection:38,tension:-4},'시작: 기존 친분'); used.push(pairKey(a.id,b.id)); }
-  for(let i=0;i<2;i++){ const [a,b]=randomPair(run,used); const e=edge(run,a,b); change(e,{tension:35,competition:40,trust:-14},'시작: 경쟁 관계'); used.push(pairKey(a.id,b.id)); }
+  for(let i=0;i<2;i++){ const [a,b]=randomPair(run,used); const e=edge(run,a,b); change(e,{trust:14,affection:22,tension:-4},'시작: 기존 친분'); used.push(pairKey(a.id,b.id)); }
+  for(let i=0;i<2;i++){ const [a,b]=randomPair(run,used); const e=edge(run,a,b); change(e,{tension:25,competition:26,trust:-10},'시작: 경쟁 관계'); used.push(pairKey(a.id,b.id)); }
   const [a,b]=randomPair(run,used); const e=edge(run,a,b); change(e,{trust:13,affection:12},'시작: 과거 도움을 받은 기억'); used.push(pairKey(a.id,b.id));
   if(run.rng()<.38) { const [rivalA,rivalB]=randomPair(run,used); const severe=edge(run,rivalA,rivalB); change(severe,{tension:28,competition:22,trust:-10},'시작: 해결되지 않은 정면 충돌'); used.push(pairKey(rivalA,rivalB)); }
   const [s1,s2]=randomPair(run,used); run.secrets.push(`${s1.name}은(는) ${s2.name}의 과거 실수에 관한 이야기를 알고 있다.`);
@@ -133,7 +141,7 @@ function chooseAction(run, actor, mood) {
 }
 
 function applyAction(run, actor, action, pressure, dayLog, mood) {
-  const target = pick(run.rng, other(run,actor.id)); const e = edge(run,actor,target);
+  const target = weightedTarget(run,actor); const e = edge(run,actor,target);
   const add = (values,text) => { change(e,values,`D${run.day}: ${text}`); applyInteractionClimate(run,e,action,mood,dayLog); dayLog.push({type:'normal', text}); };
   if(['업무 집중','주간 보고 준비','자료 정리'].includes(action)){ actor.stress=clamp(actor.stress+(action==='업무 집중'?7:4),0,100); dayLog.push({type:'normal', text:`${actor.name}은(는) ${action}에 몰입했다. <span class="muted">(${pressure}, 스트레스 +${action==='업무 집중'?7:4})</span>`}); return; }
   if(action==='건강 챙기기'){ actor.stress=clamp(actor.stress-10,0,100); add({affection:2},`${actor.name}은(는) 컨디션이 좋지 않아 ${target.name}의 배려를 받았다. <span class="muted">(스트레스 -10, 친밀도 +2)</span>`); return; }
@@ -146,6 +154,7 @@ function applyAction(run, actor, action, pressure, dayLog, mood) {
 }
 
 function addEvent(results, run, event) { if(!run.eventHistory[event.id]) results.push(event); }
+function seniorOrLeader(run) { const leader=run.npcs.find(n=>n.id===run.leaderId); if(run.rng()<.5) return leader; return pick(run.rng, run.npcs.filter(n=>n.id!==run.leaderId)); }
 function eligibleEvents(run, pressure) {
   const results=[]; const mentor=run.npcs.find(n=>n.id===run.mentorId); const leader=run.npcs.find(n=>n.id===run.leaderId); const anyone=()=>pick(run.rng,run.npcs);
   const hot=[...Object.values(run.relations)].sort((a,b)=>(b.tension+b.competition)-(a.tension+a.competition))[0];
@@ -159,18 +168,18 @@ function eligibleEvents(run, pressure) {
   if(run.day>=6&&run.day<=8) addEvent(results,run,{id:'first_task',title:'첫 번째 업무',actors:[mentor,leader],text:'처음으로 혼자 책임져야 하는 작은 업무가 주어진다.',kind:'meeting',required:true,deadline:8});
   if(run.day>=9&&run.day<=10) addEvent(results,run,{id:'company_dinner',title:'첫 회식',actors:shuffle(run.rng,run.npcs).slice(0,3),text:'퇴근 후 회식 자리에서 업무 중에는 보이지 않던 관계와 서열이 드러난다.',kind:'personal',required:true,deadline:10});
   if(run.day>=11&&run.day<=13) addEvent(results,run,{id:'mid_review',title:'중간 수습 평가',actors:[leader,mentor],text:'팀장과 사수가 첫 적응 기간의 업무 태도와 결과를 확인한다.',kind:'leader',required:true,deadline:13});
-  if(run.day>=14&&run.day<=15) addEvent(results,run,{id:'team_meeting_2',title:'중간 공유 회의',actors:[leader,anyone()],text:'각자 맡은 일을 공유하는 회의에서 플레이어의 이해도와 태도가 드러난다.',kind:'meeting',required:true,deadline:15});
-  if(run.day>=16&&run.day<=18) addEvent(results,run,{id:'big_task',title:'중요 업무 배정',actors:[leader,anyone()],text:'팀의 성과가 걸린 업무에 참여할 기회가 생겼다.',kind:'meeting',required:true,deadline:18});
+  if(run.day>=14&&run.day<=15) addEvent(results,run,{id:'team_meeting_2',title:'중간 공유 회의',actors:[seniorOrLeader(run),anyone()],text:'각자 맡은 일을 공유하는 회의에서 플레이어의 이해도와 태도가 드러난다.',kind:'meeting',required:true,deadline:15});
+  if(run.day>=16&&run.day<=18) addEvent(results,run,{id:'big_task',title:'중요 업무 배정',actors:[seniorOrLeader(run),anyone()],text:'팀의 성과가 걸린 업무에 참여할 기회가 생겼다.',kind:'meeting',required:true,deadline:18});
   if(run.day>=20&&run.day<=21) addEvent(results,run,{id:'workshop',title:'팀 워크숍',actors:shuffle(run.rng,run.npcs).slice(0,4),text:'팀 워크숍에서 협업 방식과 서로의 속마음이 조금씩 드러난다.',kind:'meeting',required:true,deadline:21});
   if(run.day>=27&&run.day<=29) addEvent(results,run,{id:'final_review',title:'30일 최종 평가',actors:[leader,mentor],text:'30일 동안의 업무 성과와 팀 적응도를 바탕으로 결론을 낸다.',kind:'leader',required:true,deadline:29});
   if(run.day>=7&&run.day<=10&&run.rng()<.12) addEvent(results,run,{id:'weekly_report',title:'주간보고 정리',actors:[mentor,anyone()],text:'첫 주 업무를 정리해 공유해야 한다. 내용보다 빠진 맥락을 챙기는지가 중요하다.',kind:'meeting',companyRandom:true});
-  if(run.day>=9&&run.day<=16&&run.rng()<.10) addEvent(results,run,{id:'minutes_gap',title:'회의록 누락',actors:[leader,anyone()],text:'지난 회의의 중요한 결정사항이 문서에서 빠졌다. 누가 기억하고 어떻게 복구하느냐가 문제가 된다.',kind:'support',companyRandom:true});
+  if(run.day>=9&&run.day<=16&&run.rng()<.10) addEvent(results,run,{id:'minutes_gap',title:'회의록 누락',actors:[seniorOrLeader(run),anyone()],text:'지난 회의의 중요한 결정사항이 문서에서 빠졌다. 누가 기억하고 어떻게 복구하느냐가 문제가 된다.',kind:'support',companyRandom:true});
   if(run.day>=10&&run.day<=18&&run.rng()<.10) addEvent(results,run,{id:'client_feedback',title:'고객 피드백 도착',actors:[pick(run.rng,run.npcs.filter(n=>n.skills.talk>=3||n.skills.sense>=3)),anyone()],text:'외부에서 애매한 피드백이 들어왔다. 그대로 믿을지, 의도를 해석할지 판단해야 한다.',kind:'meeting',companyRandom:true});
   if(run.day>=12&&run.day<=21&&run.rng()<.09) addEvent(results,run,{id:'data_cleanup',title:'자료 정리 요청',actors:[pick(run.rng,run.npcs.filter(n=>n.skills.work>=3||n.skills.plan>=3)),anyone()],text:'흩어진 자료를 정리해 다음 업무자가 볼 수 있게 만들어야 한다.',kind:'support',companyRandom:true});
-  if(run.day>=14&&run.day<=23&&run.rng()<.09) addEvent(results,run,{id:'sudden_presentation',title:'갑작스런 짧은 발표',actors:[leader,anyone()],text:'회의 중 갑자기 진행 상황을 설명해 달라는 요청이 들어왔다.',kind:'meeting',companyRandom:true});
+  if(run.day>=14&&run.day<=23&&run.rng()<.09) addEvent(results,run,{id:'sudden_presentation',title:'갑작스런 짧은 발표',actors:[seniorOrLeader(run),anyone()],text:'회의 중 갑자기 진행 상황을 설명해 달라는 요청이 들어왔다.',kind:'meeting',companyRandom:true});
   if(run.day>=18&&run.day<=25&&run.rng()<.10) addEvent(results,run,{id:'manager_checkin',title:'팀장 체크인',actors:[leader,mentor],text:`${leader.name} 팀장이 중간 결과뿐 아니라 협업 태도까지 짧게 확인한다.`,kind:'leader',companyRandom:true});
   if(run.day>=19&&run.day<=26&&run.rng()<.09) addEvent(results,run,{id:'handoff_miss',title:'인수인계 실수',actors:[mentor,anyone()],text:'업무 인수인계 과정에서 빠진 내용이 뒤늦게 발견됐다. 탓을 할지, 수습을 할지 갈림길이다.',kind:'support',companyRandom:true});
-  if(run.day>=22&&run.day<=26&&run.rng()<.12) addEvent(results,run,{id:'project_gap',title:'큰 업무 빵꾸',actors:[leader,anyone()],text:'핵심 업무에서 예상치 못한 공백이 생겨, 누군가가 수습해야 한다.',kind:'support',companyRandom:true});
+  if(run.day>=22&&run.day<=26&&run.rng()<.12) addEvent(results,run,{id:'project_gap',title:'큰 업무 빵꾸',actors:[seniorOrLeader(run),anyone()],text:'핵심 업무에서 예상치 못한 공백이 생겨, 누군가가 수습해야 한다.',kind:'support',companyRandom:true});
   if(run.day>=6&&run.day<=20) addEvent(results,run,{id:'tea_time',title:'오후 티타임',actors:[anyone(),anyone()],text:'잠깐의 티타임에 평소와 다른 조합의 사람들이 모였다.',kind:'personal'});
   const tired=run.npcs.slice().sort((a,b)=>b.stress-a.stress)[0]; if(run.day>=8&&run.day<=22&&tired.stress>=32) addEvent(results,run,{id:'health',title:'컨디션 이상',actors:[tired,anyone()],text:`${tired.name}의 안색이 좋지 않다. 주변 사람들이 업무를 나눠 맡을지 고민한다.`,kind:'personal'});
   if(run.day>=9&&run.day<=23) addEvent(results,run,{id:'interest',title:'이번 주의 관심사',actors:[anyone(),anyone()],text:'누군가의 취미와 관심사가 뜻밖의 공통점을 만든다.',kind:'personal'});
@@ -273,16 +282,40 @@ function applyNpcEventResponses(run,event,actors,outcome,dayLog) {
   let text='', values={};
   if(responder.traits.includes('성취가')||responder.traits.includes('완벽주의')) {
     values=ok?{trust:3,competition:1}:{tension:4,competition:2};
-    text=ok?`${responder.name}은(는) 결과가 나온 것을 보고 ${observer.name}을(를) 실무적으로 다시 봤다.`:`${responder.name}은(는) 실패 원인을 따지며 ${observer.name}과(와) 미묘하게 날이 섰다.`;
+    text=pick(run.rng, ok?[
+      `${responder.name}은(는) 결과가 나온 것을 보고 ${observer.name}을(를) 실무적으로 다시 봤다.`,
+      `${responder.name}은(는) 이번 성과를 보고 ${observer.name}과(와) 다음에도 손발을 맞출 만하다고 생각했다.`
+    ]:[
+      `${responder.name}은(는) 실패 원인을 따지며 ${observer.name}과(와) 미묘하게 날이 섰다.`,
+      `${responder.name}은(는) 아쉬운 결과를 보고 ${observer.name}의 준비 부족을 속으로 지적했다.`
+    ]);
   } else if(responder.traits.includes('관계중심형')||responder.traits.includes('친화력')) {
     values=ok?{affection:4,tension:-2}:{affection:2,tension:-1};
-    text=ok?`${responder.name}은(는) 분위기가 풀린 틈을 타 ${observer.name}에게 말을 붙였다.`:`${responder.name}은(는) 어색해진 공기를 풀려고 ${observer.name}을(를) 챙겼다.`;
+    text=pick(run.rng, ok?[
+      `${responder.name}은(는) 분위기가 풀린 틈을 타 ${observer.name}에게 말을 붙였다.`,
+      `${responder.name}은(는) 좋은 결과를 핑계 삼아 ${observer.name}과(와) 더 편하게 농담을 주고받았다.`
+    ]:[
+      `${responder.name}은(는) 어색해진 공기를 풀려고 ${observer.name}을(를) 챙겼다.`,
+      `${responder.name}은(는) 실망한 기색을 감추고 ${observer.name}의 편을 들어 주었다.`
+    ]);
   } else if(responder.traits.includes('분석가')||responder.traits.includes('비밀주의')) {
     values=ok?{trust:2}:{trust:-1,tension:3};
-    text=ok?`${responder.name}은(는) 이번 사건에서 누가 믿을 만한지 조용히 기록했다.`:`${responder.name}은(는) 말은 아꼈지만 ${observer.name}의 대응을 신뢰하기 어려워했다.`;
+    text=pick(run.rng, ok?[
+      `${responder.name}은(는) 이번 사건에서 누가 믿을 만한지 조용히 기록했다.`,
+      `${responder.name}은(는) 말을 아꼈지만 ${observer.name}의 대응 방식을 눈여겨봤다.`
+    ]:[
+      `${responder.name}은(는) 말은 아꼈지만 ${observer.name}의 대응을 신뢰하기 어려워했다.`,
+      `${responder.name}은(는) 실패의 이유를 혼자 되짚으며 ${observer.name}과(와) 거리를 뒀다.`
+    ]);
   } else {
     values=ok?{trust:2,affection:1}:{tension:3};
-    text=ok?`${responder.name}은(는) 이번 일을 계기로 ${observer.name}과(와) 조금 더 편해졌다.`:`${responder.name}은(는) 이번 일을 오래 기억할 것 같다.`;
+    text=pick(run.rng, ok?[
+      `${responder.name}은(는) 이번 일을 계기로 ${observer.name}과(와) 조금 더 편해졌다.`,
+      `${responder.name}은(는) 무난하게 넘어간 것에 안도하며 ${observer.name}에게 고마움을 표했다.`
+    ]:[
+      `${responder.name}은(는) 이번 일을 오래 기억할 것 같다.`,
+      `${responder.name}은(는) 아쉬운 결과에 말수가 줄었고, ${observer.name}도 그걸 눈치챘다.`
+    ]);
   }
   if(observer&&responder.id!==observer.id) change(edge(run,responder,observer),values,`D${run.day}: ${event.title} 이후 반응`);
   dayLog.push({type:'normal',label:'NPC반응',text:`<strong>${event.title} 이후 반응</strong><br>${text}`});
@@ -415,7 +448,9 @@ function scanDailyRelationDeltas(run,before,dayLog) {
 }
 function addDailyKeySummary(run,before,dayLog) {
   const names={trust:'신뢰',affection:'친밀',tension:'긴장',competition:'경쟁'};
-  const mainEvent=dayLog.find(x=>['필수·회사','필수·사적','회사랜덤','회사랜덤·갈등','개인','개인랜덤','개인·연애','휴식','사수','평가'].includes(x.label));
+  const summaryPriority=['필수·회사','필수·사적','회사랜덤·갈등','회사랜덤','회사','사수','평가','개인·연애','개인','개인랜덤','휴식'];
+  const summaryCandidates=dayLog.filter(x=>summaryPriority.includes(x.label));
+  const mainEvent=summaryCandidates.sort((a,b)=>summaryPriority.indexOf(a.label)-summaryPriority.indexOf(b.label))[0];
   const top=Object.values(run.relations).map(e=>{const prev=before[e.a+'|'+e.b]; if(!prev) return null; const deltas=['trust','affection','tension','competition'].map(k=>({key:k,value:e[k]-prev[k]})).filter(d=>d.value); const score=deltas.reduce((sum,d)=>sum+Math.abs(d.value),0); return {e,deltas,score};}).filter(Boolean).sort((a,b)=>b.score-a.score)[0];
   if(!mainEvent&&!top?.score) return;
   const eventTitle=mainEvent?mainEvent.text.replace(/<br\s*\/?>/g,'\n').replace(/<[^>]+>/g,'').split('\n')[0].slice(0,34):'평범한 하루';
