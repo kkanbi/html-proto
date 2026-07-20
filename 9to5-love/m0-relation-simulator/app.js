@@ -130,13 +130,23 @@ function assignInitialRelations(run) {
   const [s1,s2]=randomPair(run,used); run.secrets.push(`${s1.name}은(는) ${s2.name}의 과거 실수에 관한 이야기를 알고 있다.`);
 }
 
-function chooseAction(run, actor, mood) {
+const PRESSURE_INFO={
+  '마감 임박':{tag:'업무 집중·야근 분위기',work:.10,social:0,events:['project_gap','minutes_gap','handoff_miss']},
+  '고객 클레임':{tag:'외부 대응에 예민한 하루',work:.06,social:.03,events:['client_feedback']},
+  '팀장 부재':{tag:'각자 판단해야 하는 하루',work:0,social:.05,events:['leader_absent']},
+  '수습 평가 소문':{tag:'평판에 신경 쓰이는 하루',work:0,social:.08,events:['manager_checkin','weekly_report']},
+  '발표 준비':{tag:'자료·발표에 쏠린 하루',work:.08,social:0,events:['sudden_presentation','weekly_report']}
+};
+function pressureBias(pressure){ return PRESSURE_INFO[pressure]||{work:0,social:0,events:[]}; }
+function pressureBoost(pressure,eventId){ return pressureBias(pressure).events.includes(eventId)?1.5:1; }
+function chooseAction(run, actor, mood, pressure) {
+  const bias=pressureBias(pressure);
   const roll = run.rng();
   if (mood.id==='faction' && roll < .16) return pick(run.rng,['소문 전달','공을 주장하기','도움 요청']);
   if (mood.id==='cold' && actor.social >= 3 && roll < .18) return '도움 요청';
   if (actor.stress > 58 && roll < .25) return '건강 챙기기';
-  if (actor.focus >= 4 && roll < .34) return pick(run.rng,['업무 집중','주간 보고 준비','자료 정리']);
-  if (actor.social >= 4 && roll < .68) return pick(run.rng,['스몰토크','점심 함께 먹기','티타임','관심사 공유','선물 주기','소문 전달']);
+  if (actor.focus >= 4 && roll < .34+bias.work) return pick(run.rng,['업무 집중','주간 보고 준비','자료 정리']);
+  if (actor.social >= 4 && roll < .68+bias.social) return pick(run.rng,['스몰토크','점심 함께 먹기','티타임','관심사 공유','선물 주기','소문 전달']);
   if (actor.traits.includes('성취가') && roll < .77) return '공을 주장하기';
   if (actor.traits.includes('관계중심형') && roll < .82) return '업무 지원';
   return pick(run.rng,['업무 집중','도움 요청','업무 지원','스몰토크','비품 챙기기']);
@@ -174,14 +184,14 @@ function eligibleEvents(run, pressure) {
   if(run.day>=16&&run.day<=18) addEvent(results,run,{id:'big_task',title:'중요 업무 배정',actors:[seniorOrLeader(run),anyone()],text:'팀의 성과가 걸린 업무에 참여할 기회가 생겼다.',kind:'meeting',required:true,deadline:18});
   if(run.day>=20&&run.day<=21) addEvent(results,run,{id:'workshop',title:'팀 워크숍',actors:shuffle(run.rng,run.npcs).slice(0,4),text:'팀 워크숍에서 협업 방식과 서로의 속마음이 조금씩 드러난다.',kind:'meeting',required:true,deadline:21});
   if(run.day>=27&&run.day<=29) addEvent(results,run,{id:'final_review',title:'30일 최종 평가',actors:[leader,mentor],text:'30일 동안의 업무 성과와 팀 적응도를 바탕으로 결론을 낸다.',kind:'leader',required:true,deadline:29});
-  if(run.day>=7&&run.day<=10&&run.rng()<.12) addEvent(results,run,{id:'weekly_report',title:'주간보고 정리',actors:[mentor,anyone()],text:'첫 주 업무를 정리해 공유해야 한다. 내용보다 빠진 맥락을 챙기는지가 중요하다.',kind:'meeting',companyRandom:true});
-  if(run.day>=9&&run.day<=16&&run.rng()<.10) addEvent(results,run,{id:'minutes_gap',title:'회의록 누락',actors:[seniorOrLeader(run),anyone()],text:'지난 회의의 중요한 결정사항이 문서에서 빠졌다. 누가 기억하고 어떻게 복구하느냐가 문제가 된다.',kind:'support',companyRandom:true});
-  if(run.day>=10&&run.day<=18&&run.rng()<.10) addEvent(results,run,{id:'client_feedback',title:'고객 피드백 도착',actors:[pick(run.rng,run.npcs.filter(n=>n.skills.talk>=3||n.skills.sense>=3)),anyone()],text:'외부에서 애매한 피드백이 들어왔다. 그대로 믿을지, 의도를 해석할지 판단해야 한다.',kind:'meeting',companyRandom:true});
+  if(run.day>=7&&run.day<=10&&run.rng()<.12*pressureBoost(pressure,'weekly_report')) addEvent(results,run,{id:'weekly_report',title:'주간보고 정리',actors:[mentor,anyone()],text:'첫 주 업무를 정리해 공유해야 한다. 내용보다 빠진 맥락을 챙기는지가 중요하다.',kind:'meeting',companyRandom:true});
+  if(run.day>=9&&run.day<=16&&run.rng()<.10*pressureBoost(pressure,'minutes_gap')) addEvent(results,run,{id:'minutes_gap',title:'회의록 누락',actors:[seniorOrLeader(run),anyone()],text:'지난 회의의 중요한 결정사항이 문서에서 빠졌다. 누가 기억하고 어떻게 복구하느냐가 문제가 된다.',kind:'support',companyRandom:true});
+  if(run.day>=10&&run.day<=18&&run.rng()<.10*pressureBoost(pressure,'client_feedback')) addEvent(results,run,{id:'client_feedback',title:'고객 피드백 도착',actors:[pick(run.rng,run.npcs.filter(n=>n.skills.talk>=3||n.skills.sense>=3)),anyone()],text:'외부에서 애매한 피드백이 들어왔다. 그대로 믿을지, 의도를 해석할지 판단해야 한다.',kind:'meeting',companyRandom:true});
   if(run.day>=12&&run.day<=21&&run.rng()<.09) addEvent(results,run,{id:'data_cleanup',title:'자료 정리 요청',actors:[pick(run.rng,run.npcs.filter(n=>n.skills.work>=3||n.skills.plan>=3)),anyone()],text:'흩어진 자료를 정리해 다음 업무자가 볼 수 있게 만들어야 한다.',kind:'support',companyRandom:true});
-  if(run.day>=14&&run.day<=23&&run.rng()<.09) addEvent(results,run,{id:'sudden_presentation',title:'갑작스런 짧은 발표',actors:[seniorOrLeader(run),anyone()],text:'회의 중 갑자기 진행 상황을 설명해 달라는 요청이 들어왔다.',kind:'meeting',companyRandom:true});
-  if(run.day>=18&&run.day<=25&&run.rng()<.10) addEvent(results,run,{id:'manager_checkin',title:'팀장 체크인',actors:[leader,mentor],text:`${leader.name} 팀장이 중간 결과뿐 아니라 협업 태도까지 짧게 확인한다.`,kind:'leader',companyRandom:true});
-  if(run.day>=19&&run.day<=26&&run.rng()<.09) addEvent(results,run,{id:'handoff_miss',title:'인수인계 실수',actors:[mentor,anyone()],text:'업무 인수인계 과정에서 빠진 내용이 뒤늦게 발견됐다. 탓을 할지, 수습을 할지 갈림길이다.',kind:'support',companyRandom:true});
-  if(run.day>=22&&run.day<=26&&run.rng()<.12) addEvent(results,run,{id:'project_gap',title:'큰 업무 빵꾸',actors:[seniorOrLeader(run),anyone()],text:'핵심 업무에서 예상치 못한 공백이 생겨, 누군가가 수습해야 한다.',kind:'support',companyRandom:true});
+  if(run.day>=14&&run.day<=23&&run.rng()<.09*pressureBoost(pressure,'sudden_presentation')) addEvent(results,run,{id:'sudden_presentation',title:'갑작스런 짧은 발표',actors:[seniorOrLeader(run),anyone()],text:'회의 중 갑자기 진행 상황을 설명해 달라는 요청이 들어왔다.',kind:'meeting',companyRandom:true});
+  if(run.day>=18&&run.day<=25&&run.rng()<.10*pressureBoost(pressure,'manager_checkin')) addEvent(results,run,{id:'manager_checkin',title:'팀장 체크인',actors:[leader,mentor],text:`${leader.name} 팀장이 중간 결과뿐 아니라 협업 태도까지 짧게 확인한다.`,kind:'leader',companyRandom:true});
+  if(run.day>=19&&run.day<=26&&run.rng()<.09*pressureBoost(pressure,'handoff_miss')) addEvent(results,run,{id:'handoff_miss',title:'인수인계 실수',actors:[mentor,anyone()],text:'업무 인수인계 과정에서 빠진 내용이 뒤늦게 발견됐다. 탓을 할지, 수습을 할지 갈림길이다.',kind:'support',companyRandom:true});
+  if(run.day>=22&&run.day<=26&&run.rng()<.12*pressureBoost(pressure,'project_gap')) addEvent(results,run,{id:'project_gap',title:'큰 업무 빵꾸',actors:[seniorOrLeader(run),anyone()],text:'핵심 업무에서 예상치 못한 공백이 생겨, 누군가가 수습해야 한다.',kind:'support',companyRandom:true});
   if(run.day>=6&&run.day<=20) addEvent(results,run,{id:'tea_time',title:'오후 티타임',actors:[anyone(),anyone()],text:'잠깐의 티타임에 평소와 다른 조합의 사람들이 모였다.',kind:'personal'});
   const tired=run.npcs.slice().sort((a,b)=>b.stress-a.stress)[0]; if(run.day>=8&&run.day<=22&&tired.stress>=32) addEvent(results,run,{id:'health',title:'컨디션 이상',actors:[tired,anyone()],text:`${tired.name}의 안색이 좋지 않다. 주변 사람들이 업무를 나눠 맡을지 고민한다.`,kind:'personal'});
   if(run.day>=9&&run.day<=23) addEvent(results,run,{id:'interest',title:'이번 주의 관심사',actors:[anyone(),anyone()],text:'누군가의 취미와 관심사가 뜻밖의 공통점을 만든다.',kind:'personal'});
@@ -299,7 +309,7 @@ function dayCardHtml(run,day){
     return `<div class="flow-item recap"><span class="flow-tag">오늘 요약</span><div>${item.text}</div></div>`;
   }).join('');
   return `<div class="log-day">
-    <div class="day-head"><span class="day-num">D${title?.day??run.day}</span><div class="day-meta"><strong>${title?.phase||''}</strong><span class="pressure-chip">오늘의 압박 · ${title?.pressure||''}</span></div></div>
+    <div class="day-head"><span class="day-num">D${title?.day??run.day}</span><div class="day-meta"><strong>${title?.phase||''}</strong><span class="pressure-chip">오늘의 압박 · ${title?.pressure||''}${title?.pressure&&PRESSURE_INFO[title.pressure]?` <span class="muted">· ${PRESSURE_INFO[title.pressure].tag}</span>`:''}</span></div></div>
     ${morning.length||morningGroups.length?`<div class="period"><div class="period-tag">오전 · 사무실 공기</div>${morning.map(x=>backgroundLineHtml(run,x)).join('')}${morningGroups.map(g=>eventCardHtml(run,g.items)).join('')}</div>`:''}
     ${mainGroups.length?mainGroups.map(g=>`<div class="period"><div class="period-tag">${isRest(g)?'퇴근 후':'오후 · 오늘의 사건'}</div>${eventCardHtml(run,g.items)}</div>`).join(''):''}
     ${closing.length?`<div class="period"><div class="period-tag">하루 마무리</div>${closingHtml}</div>`:''}
@@ -516,7 +526,7 @@ function simulateDay(run) {
   const before=snapshotRelations(run);
   run.day++; const pressure=pick(run.rng,PRESSURES); const dayLog=[]; const mood=teamAtmosphere(run); dayLog.push({type:'title', day:run.day, phase:companyPhase(run.day), pressure, text:`D${run.day} · ${companyPhase(run.day)} · 오늘의 압박: ${pressure}`});
   if(mood.id!=='steady'&&((['cold','faction'].includes(mood.id)&&run.rng()<.45)||run.rng()<.18)) dayLog.push({type:'team',text:`<strong>오늘의 팀 공기 · ${mood.label}</strong><br>${mood.reason} <span class="muted">(업무 난도 ${mood.penalty>=0?'+':''}${mood.penalty}, 개인 사건 난도 ${mood.personalPenalty>=0?'+':''}${mood.personalPenalty})</span>`});
-  shuffle(run.rng,run.npcs).slice(0,2).forEach(actor => applyAction(run,actor,chooseAction(run,actor,mood),pressure,dayLog,mood));
+  shuffle(run.rng,run.npcs).slice(0,2).forEach(actor => applyAction(run,actor,chooseAction(run,actor,mood,pressure),pressure,dayLog,mood));
   applyTeamDailyRipple(run,mood,dayLog);
   personalRandomEvent(run,dayLog);
   applyDispositionGrowth(run,dayLog);
