@@ -223,7 +223,7 @@ function resolveEvent(run, event, dayLog, choice=null) {
   else if(event.kind==='mentor') { const m=actors[0]; if(outcome.label==='성공'){m.playerTrust+=4; m.playerCloseness+=1; dayLog.push({type:'player',text:`${m.name} 사수가 업무 태도를 좋게 봤다. <span class="muted">(사수 업무 신뢰 +4)</span>`});} else dayLog.push({type:'player',text:`${m.name} 사수의 피드백은 받았지만, 아직 신뢰를 얻지는 못했다.`}); }
   else if(event.kind==='leader') { const l=actors[0]; dayLog.push({type:'player',text:outcome.label==='성공'?`팀장 ${l.name}이(가) 이번 결과를 좋게 봤다. <span class="muted">(판정 성공으로 업무 신뢰 상승)</span>`:`팀장 ${l.name}은(는) 아직 결과를 더 지켜보기로 했다.`}); }
   else if(event.id==='heartbreak') { const target=actors[0]; revealPrivateClue(run,target,dayLog,event.title); if(outcome.label==='성공'){ const closeGain=addPlayerCloseness(run,target,5,'romance',dayLog,'실연의 여파를 함께 넘긴 일'); target.playerTrust+=1; target.stress=clamp(target.stress-8,0,100); dayLog.push({type:'player',text:`${target.name}은(는) 플레이어가 선을 넘지 않고 들어 준 것을 기억했다. <span class="muted">(친밀도 +${closeGain}, 스트레스 -8)</span>`}); } else { target.playerCloseness-=4; target.playerTrust-=2; target.stress=clamp(target.stress+6,0,100); dayLog.push({type:'player',text:`타이밍을 잘못 잡아 ${target.name}이(가) 더 방어적으로 굳었다. <span class="muted">(친밀도 -4, 신뢰 -2)</span>`}); } }
-  else { if(pair) change(pair,event.kind==='personal'?{affection:3,tension:-1}:{trust:3,affection:1},`D${run.day}: ${event.title}`); actors.forEach(n=>addPlayerCloseness(run,n,2,['personal','rest'].includes(event.kind)?event.kind:'personal',dayLog,event.title)); if(['personal','rest'].includes(event.kind)) actors.forEach(n=>revealPrivateClue(run,n,dayLog,event.title)); dayLog.push({type:'player',text:'플레이어가 상황을 함께 겪으며 관련 인물에 대한 정보를 얻었다.'}); }
+  else { if(pair) change(pair,event.kind==='personal'?{affection:3,tension:-1}:{trust:3,affection:1},`D${run.day}: ${event.title}`); const passiveGain=['personal','rest'].includes(event.kind)?2:1; actors.forEach(n=>addPlayerCloseness(run,n,passiveGain,['personal','rest'].includes(event.kind)?event.kind:'personal',dayLog,event.title)); if(['personal','rest'].includes(event.kind)) actors.forEach(n=>revealPrivateClue(run,n,dayLog,event.title)); dayLog.push({type:'player',text:'플레이어가 상황을 함께 겪으며 관련 인물에 대한 정보를 얻었다.'}); }
   for(let i=startIdx;i<dayLog.length;i++){ const item=dayLog[i]; item.group=event.id; if(!item.role&&!item.groupRole&&item.type==='player') item.role='outcome'; }
   run.eventCount++;
 }
@@ -232,7 +232,7 @@ function resolveEventCheck(run,event,actors,bonus=0) {
   const player=run.player; const trust=actors.length?Math.round(actors.reduce((sum,n)=>sum+n.playerTrust,0)/actors.length):0;
   const social=actors.length?Math.round(actors.reduce((sum,n)=>sum+n.playerCloseness,0)/actors.length):0; const support=companionSupport(run); const mood=teamAtmosphere(run);
   if(event.kind==='rest'){ const detail='휴식은 판정 실패가 없다. 선택한 방식에 따라 관계와 스트레스만 달라진다.'; player.impacts.unshift({day:run.day,kind:'event',text:`${event.title}: 휴식`,detail}); return {label:'휴식',detail}; }
-  const requirements=eventRequirements(event); const personal=['personal','rumor'].includes(event.kind); const own=Math.round(requirements.reduce((sum,key)=>sum+player.skills[key],0)/requirements.length); const specialist=eventSupport(run,requirements); const score=(personal?player.insight*3+social:own*10+trust)+bonus+specialist.value*2+Math.floor(run.rng()*16); const baseDifficulty=event.required?44:50; const difficulty=(personal?23+mood.personalPenalty:baseDifficulty+mood.penalty);
+  const requirements=eventRequirements(event); const personal=['personal','rumor'].includes(event.kind); const own=Math.round(requirements.reduce((sum,key)=>sum+player.skills[key],0)/requirements.length); const specialist=eventSupport(run,requirements); const score=(personal?player.insight*3+social:own*10+trust)+bonus+specialist.value*2+Math.floor(run.rng()*16); const baseDifficulty=event.required?44:50; const streakBump=event.required?Math.min(5,Math.max(0,run.flags.milestoneSuccess-2)):0; const difficulty=(personal?23+mood.personalPenalty:baseDifficulty+mood.penalty)+streakBump;
   let result='failure', label='실패', detail=`판정 ${score} / 난도 ${difficulty}. 필요한 ${requirements.map(skillName).join('·')} 준비와 업무 신뢰가 부족했다. ${mood.label} 팀 분위기도 발목을 잡았다.`;
   if(score>=difficulty){ result='success'; label='성공'; player.reputation+=3; const trustGain=Math.max(1,4+mood.successTrust); actors.forEach(n=>n.playerTrust+=trustGain); detail=`판정 ${score} / 난도 ${difficulty}. ${requirements.map(key=>`${skillName(key)} ${player.skills[key]}`).join(' · ')}, 관련 인물 업무 신뢰 ${trust}${specialist.name?`, ${specialist.name}의 ${specialist.stat} 지원 +${specialist.value}`:''}이 뒷받침되어 좋은 결과를 냈다. <span class="muted">(평판 +3, 관련 인물 업무 신뢰 +${trustGain})</span>`; }
   else { const stressGain=event.required?6:5; player.stress=clamp(player.stress+stressGain,0,100); const trustLoss=event.required?3+mood.failureTrust:2+mood.failureTrust; actors.forEach(n=>n.playerTrust-=trustLoss); detail+=` <span class="muted">(스트레스 +${stressGain}, 관련 인물 신뢰 -${trustLoss})</span>`; }
@@ -249,7 +249,7 @@ function applyOfficeBuddyMoment(run,dayLog) {
   const buddy=run.npcs.find(n=>n.id===run.flags.officeBuddyId)||candidates[0]||run.npcs.find(n=>n.kind==='일반');
   if(!buddy) return;
   const trustGain=buddy.skills.work>=4||buddy.skills.sense>=4?2:1;
-  const closeGain=addPlayerCloseness(run,buddy,3,'office',null,'옆자리 접점');
+  const closeGain=addPlayerCloseness(run,buddy,2,'office',null,'옆자리 접점');
   buddy.playerTrust+=trustGain;
   dayLog.push({type:'player',text:`<strong>옆자리 접점 · ${buddy.name}</strong><br>${buddy.name}이(가) 사소한 회사 생활을 챙겨 주며 자연스럽게 가까워졌다. <span class="muted">(친밀도 +${closeGain}, 업무 신뢰 +${trustGain})</span>`});
 }
@@ -326,7 +326,10 @@ function personalRandomEvent(run,dayLog) {
     {id:'mood',title:'기분이 가라앉은 오후',text:`${npc.name}이(가) 평소보다 말수가 줄었다. ${partner.name}은(는) 눈치를 보며 말을 걸지 고민했다.`,values:{affection:2,tension:-1},player:1},
     {id:'interest',title:'뜻밖의 관심사',text:`${npc.name}의 이번 주 관심사가 ${partner.name}과(와) 묘하게 겹쳤다.`,values:{affection:4,tension:-1},player:2},
     {id:'mistake',title:'작은 실수 수습',text:`${npc.name}이(가) 사소한 실수를 냈고 ${partner.name}이(가) 조용히 덮어 주었다.`,values:{trust:3,affection:1,tension:-1},player:0},
-    {id:'praise',title:'칭찬이 필요한 날',text:`${npc.name}은(는) 자신의 일이 묻힌 것 같아 예민해졌고, ${partner.name}의 한마디에 표정이 조금 풀렸다.`,values:{affection:3,tension:-2},player:2}
+    {id:'praise',title:'칭찬이 필요한 날',text:`${npc.name}은(는) 자신의 일이 묻힌 것 같아 예민해졌고, ${partner.name}의 한마디에 표정이 조금 풀렸다.`,values:{affection:3,tension:-2},player:2},
+    {id:'overtime_snack',title:'야근 간식',text:`늦게까지 남은 ${npc.name}이(가) 간식을 나누며 ${partner.name}과(와) 잠깐 숨을 돌렸다.`,values:{affection:3,trust:1},player:1},
+    {id:'lost_item',title:'사라진 물건',text:`${npc.name}이(가) 자리에서 물건을 못 찾아 헤매자 ${partner.name}이(가) 같이 찾아 주었다.`,values:{affection:2,trust:1},player:1},
+    {id:'coffee_bet',title:'커피 내기',text:`사소한 내기에서 진 ${npc.name}이(가) ${partner.name}에게 커피를 돌리며 툴툴댔다.`,values:{affection:3,tension:-1},player:1}
   ];
   const event=pick(run.rng,templates);
   const startIdx=dayLog.length;
@@ -339,7 +342,8 @@ function personalRandomEvent(run,dayLog) {
 function applyNpcEventResponses(run,event,actors,outcome,dayLog) {
   if(!actors.length||event.kind==='rest') return;
   const responder=pick(run.rng,actors);
-  const observer=pick(run.rng,run.npcs.filter(n=>!actors.some(a=>a.id===n.id)))||actors[0];
+  const coActors=actors.filter(n=>n.id!==responder.id);
+  const observer=(coActors.length&&run.rng()<.55)?pick(run.rng,coActors):weightedTarget(run,responder);
   const ok=outcome.label==='성공'||outcome.label==='휴식';
   let text='', values={};
   if(responder.traits.includes('성취가')||responder.traits.includes('완벽주의')) {
@@ -432,7 +436,7 @@ function resolveEnding(run) {
   if(run.player.stress>=92||(run.flags.requiredFailure>=7&&run.flags.milestoneSuccess<=3)||(run.flags.requiredFailure>=6&&isolated)) career={title:'수습 탈락',body:'업무와 관계 모두 흔들려, 회사가 더 지켜볼 이유를 찾지 못했다.'};
   else if((run.flags.milestoneSuccess>=5&&run.flags.finalReviewSuccess&&careerScore>=48&&run.flags.requiredFailure<5)||(run.flags.milestoneSuccess>=7&&careerScore>=58&&run.flags.requiredFailure<4)) career={title:'수습 통과',body:`필수 사건 ${run.flags.milestoneSuccess}/8회 성공으로 기본 역량을 증명했다.${run.flags.finalReviewSuccess?' 최종 평가도 통과했다.':' 최종 평가는 아쉬웠지만 누적 성과가 충분했다.'}`};
   else career={title:'수습 연장',body:`필수 사건 성공 ${run.flags.milestoneSuccess}/8회. 가능성은 보였지만 성과나 적응을 조금 더 확인해야 한다.`};
-  const workPartner=run.npcs.filter(n=>n.id!==run.mentorId&&n.id!==run.leaderId&&n.playerTrust>=12).sort((a,b)=>b.playerTrust-a.playerTrust)[0]; const firstFriend=run.npcs.find(n=>n.id===run.firstConnection);
+  const workPartner=run.npcs.filter(n=>n.id!==run.mentorId&&n.id!==run.leaderId&&n.playerTrust>=16&&n.playerTrust>=n.playerCloseness+6).sort((a,b)=>b.playerTrust-a.playerTrust)[0]; const firstFriend=run.npcs.find(n=>n.id===run.firstConnection);
   let personal;
   if(deepCloseCount>=5&&trustedCloseCount>=4) personal={title:'모두의 인기인',body:'여러 동료와 깊고 안정적인 관계를 만들며 팀 안에서 존재감이 커졌다.'};
   else if(mentor.playerTrust>=18&&mentor.playerCloseness>=14&&run.flags.mentorPersonal>=3&&run.flags.mentorWorkSuccess>=1) personal={title:'사수와 절친',body:`${mentor.name}과(와) 업무 신뢰와 사적인 시간을 모두 쌓아 가장 든든한 회사 편이 되었다.`};
@@ -498,7 +502,7 @@ function applyPlayerAction(run, dayLog) {
   run.queuedAction=null;
 }
 
-function relationshipStage(e) { if(e.tension>=58) return '적대적 긴장'; if(e.competition>=48&&e.trust>=12) return '인정하는 라이벌'; if(e.competition>=40) return '경쟁 관계'; if(e.trust>=48&&e.affection>=42) return '가까운 동맹'; if(e.affection>=32&&e.trust>=24) return '믿을 만한 동료'; if(e.affection>=20) return '친숙한 동료'; return '업무상 동료'; }
+function relationshipStage(e) { if(e.tension>=58) return (e.trust+e.affection>=24&&e.affection>=6)?'애증의 동료':'적대적 긴장'; if(e.competition>=48&&e.trust>=12) return '인정하는 라이벌'; if(e.competition>=40) return '경쟁 관계'; if(e.trust>=48&&e.affection>=42) return '가까운 동맹'; if(e.affection>=32&&e.trust>=24) return '믿을 만한 동료'; if(e.affection>=20) return '친숙한 동료'; return '업무상 동료'; }
 function snapshotRelations(run) { const before={}; Object.values(run.relations).forEach(e=>before[e.a+'|'+e.b]={stage:relationshipStage(e),trust:e.trust,affection:e.affection,tension:e.tension,competition:e.competition}); return before; }
 function scanTransitions(run, before, dayLog) { Object.values(run.relations).forEach(e=>{const previous=before[e.a+'|'+e.b]?.stage; const next=relationshipStage(e); if(previous&&previous!==next){const a=run.npcs.find(n=>n.id===e.a),b=run.npcs.find(n=>n.id===e.b); dayLog.push({type:'event',label:'관계변화',text:`<strong>${a.name} ↔ ${b.name}</strong><br>${previous}에서 <strong>${next}</strong>(으)로 변했다. <span class="muted">(${e.history.at(-1)||'누적된 행동'})</span>`});}}); }
 function scanDailyRelationDeltas(run,before,dayLog) {
