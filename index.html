@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>kkanbi HTML Prototypes</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f1e8;
+      color: #1f2a33;
+    }
+    main {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 56px 22px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(30px, 5vw, 48px);
+      letter-spacing: -0.04em;
+    }
+    p {
+      color: #66727d;
+      line-height: 1.7;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 28px;
+    }
+    a.card {
+      display: block;
+      padding: 22px;
+      border-radius: 18px;
+      background: #fff;
+      color: inherit;
+      text-decoration: none;
+      box-shadow: 0 14px 34px rgba(33, 40, 48, 0.08);
+      border: 1px solid rgba(31, 42, 51, 0.08);
+    }
+    a.card:hover {
+      transform: translateY(-2px);
+      transition: transform 160ms ease;
+    }
+    .tag {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: #e9f2ec;
+      color: #2f6d45;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    h2 {
+      margin: 0 0 8px;
+      font-size: 21px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>HTML Prototypes</h1>
+    <p>작은 HTML 실험실입니다. 게임 기획, 시뮬레이터, 인터랙션 검증판을 프로젝트별 폴더로 모읍니다.</p>
+
+    <section class="grid">
+      <a class="card" href="./9to5-love/m0-relation-simulator/">
+        <span class="tag">9to5 Love</span>
+        <h2>M0 관계 생태계 시뮬레이터</h2>
+        <p>신입사원이 30일 동안 회사 생태계 안에서 NPC 관계, 사건, 엔딩 변화를 확인하는 텍스트 검증판.</p>
+      </a>
+    </section>
+  </main>
+</body>
+</html>

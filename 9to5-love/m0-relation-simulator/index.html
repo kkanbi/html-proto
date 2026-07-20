@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>M0 관계 생태계 시뮬레이터</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">신입사원 생존 로그라이트 · 로컬 M0</p>
+          <h1>관계 생태계 시뮬레이터</h1>
+          <p class="intro">직급·팀장·사수·관계망은 매 회차 생성됩니다. 당신은 이미 돌아가던 회사에 들어온 신입사원입니다.</p>
+        </div>
+        <div class="run-controls">
+          <label>시드 <input id="seedInput" type="number" value="1001" /></label>
+          <button id="newRunButton" class="primary">새 회사 만들기</button>
+          <button id="replayButton">같은 시드 다시 보기</button>
+        </div>
+      </header>
+
+      <section id="runSetup" class="panel setup-panel"></section>
+
+      <section class="panel simulation-controls">
+        <div>
+          <p class="eyebrow">플레이어 성향</p>
+          <h2 id="tendencyTitle">첫 인맥을 선택하면 성향이 생깁니다</h2>
+          <p class="intro" id="tendencyHint">평소 행동은 가까운 NPC의 성향을 닮아 자동으로 일어납니다. 중요한 회사 이벤트에서만 직접 선택합니다.</p>
+        </div>
+        <div class="day-controls">
+          <button id="nextDayButton" disabled>다음 날 진행</button>
+          <button id="autoRunButton" class="primary" disabled>30일 자동 진행</button>
+          <button id="resetRunButton" disabled>처음으로</button>
+        </div>
+      </section>
+
+      <section class="panel pending-event" id="pendingEventPanel" hidden></section>
+
+      <section class="dashboard">
+        <article class="panel log-panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">회사 일지</p><h2 id="dayTitle">회사를 생성해 주세요</h2></div>
+            <span id="dayBadge" class="badge">D0</span>
+          </div>
+          <div id="eventLog" class="event-log empty-state">새 회사를 만들면 이곳에 하루 단위의 행동과 사건이 기록됩니다.</div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading"><div><p class="eyebrow">현재 조직</p><h2>팀장과 사수</h2></div></div>
+          <div id="authorityPanel" class="authority-panel empty-state">아직 배정되지 않았습니다.</div>
+          <div class="divider"></div>
+          <div class="panel-heading"><div><p class="eyebrow">플레이어 영향</p><h2>내가 바꾼 것</h2></div></div>
+          <div id="playerImpactPanel" class="authority-panel empty-state">직접 개입하거나 사건을 겪으면 영향이 요약됩니다.</div>
+          <div class="divider"></div>
+          <div class="panel-heading"><div><p class="eyebrow">첫 인맥</p><h2>핵심 NPC 카드</h2></div></div>
+          <div id="connectionCards" class="connection-cards empty-state">회사를 생성하면 첫 인맥을 선택할 수 있습니다.</div>
+        </article>
+      </section>
+
+      <section class="dashboard lower-dashboard">
+        <article class="panel">
+          <div class="panel-heading"><div><p class="eyebrow">구성원</p><h2>이번 회차의 오피스</h2></div></div>
+          <div id="roster" class="roster"></div>
+        </article>
+        <article class="panel">
+          <div class="panel-heading"><div><p class="eyebrow">관계망</p><h2>중요 관계</h2></div></div>
+          <div id="relationshipList" class="relationship-list empty-state">회사를 생성하면 시작 관계와 변화가 표시됩니다.</div>
+        </article>
+      </section>
+
+      <section class="panel profile-panel">
+        <div class="panel-heading"><div><p class="eyebrow">관찰 기록</p><h2>NPC 프로필 해금</h2></div></div>
+        <div id="profilePanel" class="profile-grid empty-state">사건을 겪고 NPC를 관찰하면, 성격·욕망·상처에 대한 정보가 단계적으로 해금됩니다.</div>
+      </section>
+
+      <section class="panel summary-panel" id="summaryPanel" hidden></section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
