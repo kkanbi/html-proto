@@ -25,11 +25,42 @@
       color: #66727d;
       line-height: 1.7;
     }
+    .category {
+      margin-top: 44px;
+    }
+    .category:first-of-type {
+      margin-top: 36px;
+    }
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .category-icon {
+      font-size: 20px;
+      line-height: 1;
+    }
+    .category-title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #1f2a33;
+    }
+    .category-count {
+      font-size: 12px;
+      color: #97a2ab;
+      font-weight: 600;
+    }
+    .category-divider {
+      flex: 1;
+      height: 1px;
+      background: rgba(31, 42, 51, 0.12);
+    }
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 16px;
-      margin-top: 28px;
     }
     a.card {
       display: block;
@@ -66,27 +97,57 @@
     <h1>HTML Prototypes</h1>
     <p>작은 HTML 실험실입니다. 게임 기획, 시뮬레이터, 인터랙션 검증판을 프로젝트별 폴더로 모읍니다.</p>
 
-    <section class="grid">
-      <a class="card" href="./9to5-love/m0-relation-simulator/">
-        <span class="tag">9to5 Love</span>
-        <h2>M0 관계 생태계 시뮬레이터</h2>
-        <p>신입사원이 30일 동안 회사 생태계 안에서 NPC 관계, 사건, 엔딩 변화를 확인하는 텍스트 검증판.</p>
-      </a>
-      <a class="card" href="./todak-routine/">
-        <span class="tag">토닥루틴</span>
-        <h2>토닥루틴도우미</h2>
-        <p>수유·수면·이유식 흐름을 계산하고 기록하는 육아 루틴 도우미 (빌드본 보관).</p>
-      </a>
-      <a class="card" href="./gut-diary/">
-        <span class="tag">Gut Diary</span>
-        <h2>내 배 일기</h2>
-        <p>장 건강 기록 다이어리 (빌드본 보관).</p>
-      </a>
-      <a class="card" href="./novel-assistant/">
-        <span class="tag">Novel Assistant</span>
-        <h2>소설 작성기</h2>
-        <p>회차 관리, AI 퇴고, 캐릭터·세계관 기획 도구를 갖춘 웹 기반 소설 작성 도구.</p>
-      </a>
+    <section class="category">
+      <div class="category-header">
+        <span class="category-icon">📱</span>
+        <span class="category-title">앱</span>
+        <span class="category-divider"></span>
+        <span class="category-count">2</span>
+      </div>
+      <div class="grid">
+        <a class="card" href="./todak-routine/">
+          <span class="tag">토닥루틴</span>
+          <h2>토닥루틴도우미</h2>
+          <p>수유·수면·이유식 흐름을 계산하고 기록하는 육아 루틴 도우미 (빌드본 보관).</p>
+        </a>
+        <a class="card" href="./gut-diary/">
+          <span class="tag">Gut Diary</span>
+          <h2>내 배 일기</h2>
+          <p>장 건강 기록 다이어리 (빌드본 보관).</p>
+        </a>
+      </div>
+    </section>
+
+    <section class="category">
+      <div class="category-header">
+        <span class="category-icon">🎮</span>
+        <span class="category-title">게임</span>
+        <span class="category-divider"></span>
+        <span class="category-count">1</span>
+      </div>
+      <div class="grid">
+        <a class="card" href="./9to5-love/m0-relation-simulator/">
+          <span class="tag">9to5 Love</span>
+          <h2>M0 관계 생태계 시뮬레이터</h2>
+          <p>신입사원이 30일 동안 회사 생태계 안에서 NPC 관계, 사건, 엔딩 변화를 확인하는 텍스트 검증판.</p>
+        </a>
+      </div>
+    </section>
+
+    <section class="category">
+      <div class="category-header">
+        <span class="category-icon">🛠️</span>
+        <span class="category-title">유틸</span>
+        <span class="category-divider"></span>
+        <span class="category-count">1</span>
+      </div>
+      <div class="grid">
+        <a class="card" href="./novel-assistant/">
+          <span class="tag">Novel Assistant</span>
+          <h2>소설 작성기</h2>
+          <p>회차 관리, AI 퇴고, 캐릭터·세계관 기획 도구를 갖춘 웹 기반 소설 작성 도구.</p>
+        </a>
+      </div>
     </section>
   </main>
 </body>
