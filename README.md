@@ -4,6 +4,7 @@
 
 ## 목록
 
+- [Pomory / 요정 성장 시뮬레이터](pomory/) — 뽀모도로 힐링 게임 기획 검증판 (원본: [kkanbi/Pomory](https://github.com/kkanbi/Pomory), public). 알 리빌·분야별 특성·완성체 타입·테라리움 도감·매일 접속 케어를 손으로 검증하는 단일 HTML 시뮬레이터.
 - [9to5 Love / M0 관계 생태계 시뮬레이터](9to5-love/m0-relation-simulator/)
 - [토닥루틴도우미](todak-routine/) — 원본: [kkanbi/todak-routine](https://github.com/kkanbi/todak-routine) (private), 빌드본 보관
 - [내 배 일기 (gut-diary)](gut-diary/) — 원본: [kkanbi/gut-diary](https://github.com/kkanbi/gut-diary) (private), 빌드본 보관
