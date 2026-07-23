@@ -34,6 +34,14 @@ argument-hint: "[todak-routine|gut-diary|novel-assistant] (생략 시 전체 동
 
 - clone만 하면 됨. `index.html`, `styles.css`, `src/`만 복사 (덮어쓰기). `docs/`, `proxy_server.py`, `*.bat`, `cloudflare-worker-proxy.js`는 로컬 개발용이라 제외.
 
+## pomory (kkanbi/Pomory, public, 단일 HTML 게임 기획 프로토타입, 빌드 불필요)
+
+- 원본은 Flutter 앱 레포지만, 이 프로토타입은 코어 게임 디자인 검증용 **단일 HTML 파일**로 세션에서 직접 제작된 것 (레포의 앱 소스와 별개).
+- 자기완결형(외부 의존 없음, 인라인 CSS/JS). API 키 없음.
+- 최신본이 세션 스크래치패드나 Claude 아티팩트로 있으면 그 내용을 `pomory/index.html`로 복사.
+  - 아티팩트/스크래치패드 원본은 head 래퍼(`<!doctype>`/`<head>`)가 없으므로, `<title>`+`<style>`을 `<head>`에 넣고 `<div class="phone">`부터를 `<body>`에 넣는 형태로 감싸서 저장.
+- 원본 레포(kkanbi/Pomory)에는 이 HTML이 포함되어 있지 않을 수 있음 — 여기 스냅샷이 기준.
+
 ## 새 프로젝트를 추가하고 싶을 때
 
 1. 해당 레포가 빌드 시스템이 있는지 확인 (`package.json` 유무).
