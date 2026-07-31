@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="version" content="0.3.1">
+    <meta name="version" content="0.8.0">
     <meta name="description" content="소설 작성 전문 웹 애플리케이션">
-    <title>소설 작성기 v0.3.1</title>
+    <title>소설 작성기 v0.8.0</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,6 +13,15 @@
     <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+    <!-- 최초 1회 안내 배너 (닫으면 다시 뜨지 않음) -->
+    <div id="firstVisitNotice" class="first-visit-notice">
+        <strong>⚠️ 시작하기 전에 꼭 읽어주세요</strong><br>
+        작성한 원고는 <strong>이 브라우저 안에만</strong> 저장됩니다. 브라우저 캐시·사이트 데이터를 지우거나,
+        시크릿 모드를 쓰거나, 다른 브라우저·기기로 접속하면 <strong>원고가 사라집니다.</strong><br>
+        왼쪽 아래 <strong>💾 로컬 다운로드</strong> 버튼으로 자주 백업하세요. (Google Drive 연동도 가능합니다)
+        <button id="dismissFirstVisitNotice" class="first-visit-notice__dismiss">확인했습니다</button>
+    </div>
+
     <div class="container">
         <!-- 왼쪽: 회차 목록 -->
         <aside class="episodes-section">
@@ -62,6 +71,9 @@
                     <button class="btn btn-secondary" id="btnNewVolume">📖 새 권 만들기</button>
                     <button class="btn btn-secondary" id="btnDownload" style="font-size: 11px;">💾 로컬 다운로드</button>
                     <button class="btn btn-secondary" id="btnExportText" style="font-size: 11px;">📝 텍스트 내보내기</button>
+                    <div class="inline-notice">
+                        원고는 이 브라우저에만 저장됩니다.<br>캐시를 지우면 사라지니 자주 백업하세요.
+                    </div>
                 </div>
             </div>
         </aside>
@@ -346,21 +358,16 @@
                     <div class="review-accordion-body" id="reviewAccordionBody">
                         <div class="api-panel">
                             <div class="api-input-group">
-                                <label class="api-label">모델</label>
-                                <select class="api-input" id="aiModelSelect" style="cursor:pointer;">
-                                    <option value="claude">Claude (Sonnet 4.6)</option>
-                                    <option value="gemini">Gemini 2.5 Flash</option>
-                                </select>
-                            </div>
-                            <div class="api-input-group" id="claudeKeyRow">
-                                <label class="api-label">Claude Key</label>
-                                <input type="password" class="api-input" id="apiKey" placeholder="sk-ant-...">
+                                <label class="api-label">Gemini API Key</label>
+                                <input type="password" class="api-input" id="apiKey" placeholder="AIza...">
                                 <div class="api-status" id="apiStatus">API 키를 입력하세요</div>
-                            </div>
-                            <div class="api-input-group" id="geminiKeyRow" style="display:none;">
-                                <label class="api-label">Gemini Key</label>
-                                <input type="password" class="api-input" id="geminiApiKey" placeholder="AIza...">
-                                <div class="api-status" id="geminiApiStatus">API 키를 입력하세요</div>
+                                <div class="inline-notice">
+                                    🔑 <strong>본인 API 키를, 본인 PC에서만</strong> 입력하세요.<br>
+                                    키는 이 브라우저에 저장되며 Google 서버 외 다른 곳으로 전송되지 않습니다.
+                                    공용 PC에서는 사용하지 마세요.<br>
+                                    무료 발급: <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">aistudio.google.com/apikey</a>
+                                    — 무료 티어에는 사용량 한도가 있으며, 초과 시 잠시 후 다시 시도하면 됩니다.
+                                </div>
                             </div>
                         </div>
 
@@ -400,7 +407,7 @@
                             </div>
                             <div class="usage-row">
                                 <span>📊 누적 사용</span>
-                                <span id="totalUsage">$0.00 (0회)</span>
+                                <span id="totalUsage">0회 · 0토큰 (무료 티어)</span>
                             </div>
                             <button class="btn-reset-usage" id="btnResetUsage" title="사용량 초기화">사용량 리셋</button>
                         </div>
@@ -609,5 +616,22 @@
         </div>
     </div>
     <script type="module" src="./src/main.js"></script>
+    <script>
+        // 최초 방문 안내 배너 — 한 번 닫으면 다시 표시하지 않는다.
+        (function () {
+            var KEY = 'novelWriter_noticeDismissed';
+            var notice = document.getElementById('firstVisitNotice');
+            var dismiss = document.getElementById('dismissFirstVisitNotice');
+            if (!notice || !dismiss) return;
+
+            if (localStorage.getItem(KEY) !== '1') {
+                notice.classList.add('is-visible');
+            }
+            dismiss.addEventListener('click', function () {
+                notice.classList.remove('is-visible');
+                localStorage.setItem(KEY, '1');
+            });
+        })();
+    </script>
 </body>
 </html>
