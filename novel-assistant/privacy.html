@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>개인정보처리방침 — 소설 작성기</title>
+<meta name="description" content="소설 작성기의 개인정보처리방침. 원고와 API 키는 사용자 브라우저에만 저장되며 개발자에게 전송되지 않습니다.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0 auto; padding: 48px 24px 96px; max-width: 720px;
+    font-family: "Pretendard", -apple-system, "Malgun Gothic", sans-serif;
+    line-height: 1.75; font-size: 16px;
+    background: #14141a; color: #e8e5e0;
+  }
+  @media (prefers-color-scheme: light) {
+    body { background: #f7f6f3; color: #2a2724; }
+    .card { background: #fff !important; border-color: #e4e0d8 !important; }
+    code { background: #eeebe4 !important; }
+    footer { border-color: #e4e0d8 !important; }
+  }
+  h1 { font-size: 30px; margin: 0 0 8px; letter-spacing: -0.02em; }
+  h2 { font-size: 19px; margin: 40px 0 12px; color: #e3b872; }
+  .lead { color: #9a9490; margin: 0 0 32px; }
+  .card {
+    background: #1d1d25; border: 1px solid #2e2e38; border-radius: 10px;
+    padding: 18px 20px; margin: 24px 0;
+  }
+  ul { padding-left: 20px; }
+  li { margin: 8px 0; }
+  code { background: #26262f; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+  strong { color: #e3b872; }
+  a { color: #e3b872; }
+  footer {
+    margin-top: 56px; padding-top: 20px; border-top: 1px solid #2e2e38;
+    font-size: 14px; color: #8a847f;
+  }
+</style>
+</head>
+<body>
+
+<h1>개인정보처리방침</h1>
+<p class="lead">소설 작성기 (Novel Assistant) · 최종 수정일 2026년 7월 31일</p>
+
+<div class="card">
+  <strong>요약:</strong> 이 앱은 서버가 없습니다. 작성한 원고와 입력한 API 키는
+  <strong>사용자 브라우저 안에만</strong> 저장되며, 개발자에게 전송되거나 수집되지 않습니다.
+</div>
+
+<h2>1. 수집하는 개인정보</h2>
+<p><strong>없습니다.</strong> 이 앱은 회원가입이 없고, 이름·이메일·연락처 등 어떤 개인정보도 수집하지 않습니다.
+운영자가 관리하는 서버나 데이터베이스가 존재하지 않습니다.</p>
+
+<h2>2. 원고 데이터의 저장 위치</h2>
+<ul>
+  <li>작성한 원고, 캐릭터, 세계관 등 모든 작업 내용은 브라우저의
+      <code>localStorage</code>에 저장됩니다.</li>
+  <li>이 데이터는 <strong>사용자의 기기를 떠나지 않습니다.</strong></li>
+  <li>브라우저 캐시·사이트 데이터를 삭제하면 함께 사라집니다.
+      중요한 원고는 <strong>다운로드 버튼으로 직접 백업</strong>하시기 바랍니다.</li>
+</ul>
+
+<h2>3. Google Drive 연동 (선택 기능)</h2>
+<p>사용하지 않아도 앱의 모든 기능이 정상 동작합니다. 연동을 선택하신 경우:</p>
+<ul>
+  <li>요청 권한은 <code>drive.file</code> <strong>하나뿐</strong>입니다 —
+      이 앱이 만들거나 사용자가 직접 선택한 파일에만 접근합니다.
+      드라이브의 다른 파일은 <strong>읽을 수 없습니다.</strong></li>
+  <li>파일은 사용자 본인의 Google Drive에 저장되며, 개발자는 접근할 수 없습니다.</li>
+  <li>인증은 Google이 제공하는 표준 OAuth 방식으로 처리되며,
+      앱은 사용자의 비밀번호를 보거나 저장하지 않습니다.</li>
+  <li>연동 해제는 <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer">Google 계정 권한 관리</a>에서
+      언제든 가능합니다.</li>
+</ul>
+
+<h2>4. AI 퇴고 기능 (선택 기능)</h2>
+<ul>
+  <li>사용자가 직접 발급받은 <strong>본인의 Google Gemini API 키</strong>로 동작합니다.</li>
+  <li>키는 브라우저에만 저장되며, <strong>개발자에게 전송되지 않습니다.</strong></li>
+  <li>검토를 요청하면 해당 원고가 브라우저에서 <strong>Google API 서버로 직접</strong> 전송됩니다.
+      중계 서버나 프록시를 거치지 않습니다.</li>
+  <li>이때의 데이터 처리는 Google의
+      <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">개인정보처리방침</a> 및
+      <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer">Gemini API 약관</a>을 따릅니다.</li>
+  <li>AI 기능을 쓰지 않으면 원고는 어떤 외부 서버로도 전송되지 않습니다.</li>
+</ul>
+
+<h2>5. 쿠키 및 분석 도구</h2>
+<p>추적 쿠키를 사용하지 않으며, 접속자 분석 도구를 설치하지 않았습니다.
+광고를 게재하지 않고, 제3자에게 데이터를 제공하지 않습니다.</p>
+
+<h2>6. 외부 리소스</h2>
+<p>화면 표시를 위해 Google Fonts에서 웹폰트를 불러옵니다.
+이 과정에서 Google에 접속 기록이 남을 수 있으며, 이는 Google의 정책을 따릅니다.</p>
+
+<h2>7. 주의사항</h2>
+<div class="card">
+  원고와 API 키가 브라우저에 저장되므로, <strong>공용 PC나 타인의 기기에서는 사용을 권장하지 않습니다.</strong>
+  부득이 사용했다면 브라우저의 사이트 데이터를 삭제해 주세요.
+</div>
+
+<h2>8. 문의</h2>
+<p>이 앱은 오픈소스로 공개되어 있으며, 소스 코드에서 위 내용을 직접 확인하실 수 있습니다.<br>
+문의는 <a href="https://github.com/kkanbi/html-proto/issues" target="_blank" rel="noopener noreferrer">GitHub 이슈</a>로 남겨주세요.</p>
+
+<footer>
+  <a href="./">← 소설 작성기로 돌아가기</a>
+</footer>
+
+</body>
+</html>
