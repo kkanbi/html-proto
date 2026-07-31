@@ -18,8 +18,8 @@ export function autoSaveLocal() {
   );
 
   localStorage.setItem(
-    'novelWriter_claudeKey',
-    state.claudeApiKey || ''
+    'novelWriter_apiKey',
+    state.apiKey || ''
   );
 
   localStorage.setItem(
@@ -98,8 +98,8 @@ export function loadAutoSave({ onAfterLoad } = {}) {
         10
       ) || 0;
 
-    state.claudeApiKey =
-      localStorage.getItem('novelWriter_claudeKey') || '';
+    state.apiKey =
+      localStorage.getItem('novelWriter_apiKey') || '';
 
     if (typeof onAfterLoad === 'function') onAfterLoad();
   } catch (e) {

@@ -1,7 +1,13 @@
 // character-ai.js - AI 캐릭터 자동생성
-import { addUsage, calculateCost, estimateTokens } from '../utils/api-usage.js';
-import { getAnthropicApiUrl, createApiRequestOptions, getApiErrorMessage } from '../utils/api-helper.js';
-import { CLAUDE_CONFIG } from '../utils/constants.js';
+import { addUsage, estimateTokens } from '../utils/api-usage.js';
+import {
+    getGeminiApiUrl,
+    createGeminiRequestOptions,
+    getApiErrorMessage,
+    extractResponseText,
+    extractUsage,
+    calculateGeminiCost
+} from '../utils/api-helper.js';
 
 /**
  * AI로 캐릭터 정보 자동 생성
@@ -9,8 +15,8 @@ import { CLAUDE_CONFIG } from '../utils/constants.js';
 export async function generateCharacterWithAI(characterName, role, genre) {
     const apiKey = document.getElementById('apiKey').value;
 
-    if (!apiKey || !apiKey.startsWith('sk-ant-')) {
-        alert('먼저 퇴고 탭에서 Claude API 키를 입력해주세요.');
+    if (!apiKey || !apiKey.startsWith('AIza')) {
+        alert('먼저 퇴고 탭에서 Gemini API 키를 입력해주세요. (AIza... 로 시작)');
         return null;
     }
 
@@ -57,34 +63,23 @@ export async function generateCharacterWithAI(characterName, role, genre) {
         // 로딩 표시
         showGeneratingMessage();
 
-        // API 호출 준비 (CORS 처리 자동)
-        const payload = {
-            model: CLAUDE_CONFIG.MODEL,
-            max_tokens: 2000,
-            messages: [{
-                role: 'user',
-                content: prompt
-            }]
-        };
-
-        // 환경에 맞는 API URL 가져오기 (로컬/GitHub Pages 자동 감지)
-        const apiUrl = getAnthropicApiUrl();
-        const requestOptions = createApiRequestOptions(apiKey, payload);
+        const apiUrl = getGeminiApiUrl();
+        const requestOptions = createGeminiRequestOptions(apiKey, prompt);
 
         const response = await fetch(apiUrl, requestOptions);
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error?.message || '요청 실패');
+            const errorData = await response.json().catch(() => ({}));
+            const errorMsg = errorData.error?.message || response.statusText;
+            throw new Error(`API 오류 (${response.status}): ${errorMsg}`);
         }
 
         const result = await response.json();
-        const generatedText = result.content[0].text;
+        const generatedText = extractResponseText(result);
 
         // 토큰 사용량 및 비용 계산
-        const inputTokens = result.usage.input_tokens;
-        const outputTokens = result.usage.output_tokens;
-        const cost = calculateCost(inputTokens, outputTokens);
+        const { inputTokens, outputTokens } = extractUsage(result);
+        const cost = calculateGeminiCost(inputTokens, outputTokens);
 
         // 사용량 기록
         addUsage('character-gen', cost, inputTokens, outputTokens);

@@ -3,39 +3,25 @@ import { scrollToText, replaceEditorText } from './editor.js';
 import { getCoreText } from './core-settings.js';
 import { getCharactersText } from './characters.js';
 import { getWorldText } from './world.js';
-import { CLAUDE_CONFIG } from '../utils/constants.js';
+import { GEMINI_CONFIG } from '../utils/constants.js';
 import { autoSaveLocal } from '../core/storage.js';
-import { addUsage, calculateCost, resetUsage, updateUsageDisplay } from '../utils/api-usage.js';
+import { addUsage, resetUsage, updateUsageDisplay } from '../utils/api-usage.js';
 import {
-    getAnthropicApiUrl, createApiRequestOptions, getApiErrorMessage,
-    getGeminiApiUrl, createGeminiRequestOptions, calculateGeminiCost
+    getGeminiApiUrl, createGeminiRequestOptions, calculateGeminiCost,
+    getApiErrorMessage, extractResponseText, extractUsage
 } from '../utils/api-helper.js';
 import { state } from '../core/state.js';
 
-let claudeApiKey = '';
-let geminiApiKey = '';
+let apiKey = '';
 let els = {};
 
 export function initReview(elements) {
     els = elements;
 
-    // 모델 선택 → API 키 입력창 전환
-    const modelSelect = document.getElementById('aiModelSelect');
-    const claudeKeyRow = document.getElementById('claudeKeyRow');
-    const geminiKeyRow = document.getElementById('geminiKeyRow');
-
-    function updateModelUI() {
-        const model = modelSelect?.value;
-        if (claudeKeyRow) claudeKeyRow.style.display = model === 'gemini' ? 'none' : '';
-        if (geminiKeyRow) geminiKeyRow.style.display = model === 'gemini' ? '' : 'none';
-    }
-    modelSelect?.addEventListener('change', updateModelUI);
-    updateModelUI();
-
-    // Claude API 키 입력
+    // Gemini API 키 입력
     els.apiKey.addEventListener('input', () => {
-        claudeApiKey = els.apiKey.value.trim();
-        if (claudeApiKey.startsWith('sk-ant-')) {
+        apiKey = els.apiKey.value.trim();
+        if (apiKey.startsWith('AIza')) {
             els.apiStatus.textContent = '✓ 설정됨';
             els.apiStatus.className = 'api-status connected';
         } else {
@@ -44,35 +30,11 @@ export function initReview(elements) {
         }
     });
 
-    // Gemini API 키 입력
-    document.getElementById('geminiApiKey')?.addEventListener('input', (e) => {
-        geminiApiKey = e.target.value.trim();
-        const geminiStatus = document.getElementById('geminiApiStatus');
-        if (geminiStatus) {
-            if (geminiApiKey.length > 10) {
-                geminiStatus.textContent = '✓ 설정됨';
-                geminiStatus.className = 'api-status connected';
-            } else {
-                geminiStatus.textContent = 'API 키를 입력하세요';
-                geminiStatus.className = 'api-status';
-            }
-        }
-    });
-
     // AI 검토 버튼
     document.getElementById('btnAiCheck')?.addEventListener('click', async () => {
-        const model = document.getElementById('aiModelSelect')?.value || 'claude';
-
-        if (model === 'gemini') {
-            if (!geminiApiKey || geminiApiKey.length < 10) {
-                alert('먼저 Gemini API 키를 입력해주세요.');
-                return;
-            }
-        } else {
-            if (!claudeApiKey || !claudeApiKey.startsWith('sk-ant-')) {
-                alert('먼저 Claude API 키를 입력해주세요.');
-                return;
-            }
+        if (!apiKey || !apiKey.startsWith('AIza')) {
+            alert('먼저 Gemini API 키를 입력해주세요. (AIza... 로 시작)');
+            return;
         }
 
         const content = els.episodeContent.value.trim();
@@ -81,7 +43,7 @@ export function initReview(elements) {
             return;
         }
 
-        await performAIReview(content, model);
+        await performAIReview(content);
     });
 
     // Reset 버튼
@@ -113,11 +75,10 @@ export function initReview(elements) {
 }
 
 /**
- * AI 검토 수행
+ * AI 검토 수행 (Google Gemini)
  * @param {string} content - 원고 텍스트
- * @param {string} model - 'claude' | 'gemini'
  */
-async function performAIReview(content, model = 'claude') {
+async function performAIReview(content) {
     // 자유질문 우선
     const customQuestion = document.getElementById('customQuestion')?.value.trim();
 
@@ -212,15 +173,13 @@ ${reviewItems.map((item, i) => `${i + 1}. ${item}`).join('\n')}
     }, 1000);
 
     // API 호출 준비
-    const isGemini = model === 'gemini';
-    const apiUrl = isGemini ? getGeminiApiUrl() : getAnthropicApiUrl();
-    const requestOptions = isGemini
-        ? createGeminiRequestOptions(geminiApiKey, prompt)
-        : createApiRequestOptions(claudeApiKey, {
-            model: CLAUDE_CONFIG.MODEL,
-            max_tokens: 4000,
-            messages: [{ role: 'user', content: prompt }]
-        });
+    // 검토 결과는 길어질 수 있으므로 출력 한도를 넉넉히 잡는다.
+    const apiUrl = getGeminiApiUrl();
+    const requestOptions = createGeminiRequestOptions(
+        apiKey,
+        prompt,
+        GEMINI_CONFIG.MAX_OUTPUT_TOKENS_LONG
+    );
 
     const MAX_RETRIES = 3;
     const TIMEOUT_MS = 120000;
@@ -247,34 +206,18 @@ ${reviewItems.map((item, i) => `${i + 1}. ${item}`).join('\n')}
             }
 
             if (!response.ok) {
-                const errorData = await response.json();
+                const errorData = await response.json().catch(() => ({}));
                 console.error('API Error Response:', errorData);
-                const errorMsg = errorData.error?.message || JSON.stringify(errorData);
+                const errorMsg = errorData.error?.message || response.statusText;
                 throw new Error(`API 오류 (${response.status}): ${errorMsg}`);
             }
 
             const result = await response.json();
-            console.log('API Success Response:', result);
 
-            let reviewResult, inputTokens, outputTokens, cost;
-
-            if (isGemini) {
-                if (!result.candidates?.[0]?.content?.parts?.[0]?.text) {
-                    throw new Error('Gemini 응답 형식이 올바르지 않습니다.');
-                }
-                reviewResult = result.candidates[0].content.parts[0].text;
-                inputTokens = result.usageMetadata?.promptTokenCount || 0;
-                outputTokens = result.usageMetadata?.candidatesTokenCount || 0;
-                cost = calculateGeminiCost(inputTokens, outputTokens);
-            } else {
-                if (!result.content || !result.content[0] || !result.content[0].text) {
-                    throw new Error('응답 형식이 올바르지 않습니다.');
-                }
-                reviewResult = result.content[0].text;
-                inputTokens = result.usage.input_tokens;
-                outputTokens = result.usage.output_tokens;
-                cost = calculateCost(inputTokens, outputTokens);
-            }
+            // 안전 필터 차단 / 출력 잘림도 여기서 구분해 던진다.
+            const reviewResult = extractResponseText(result);
+            const { inputTokens, outputTokens } = extractUsage(result);
+            const cost = calculateGeminiCost(inputTokens, outputTokens);
 
             addUsage('review', cost, inputTokens, outputTokens);
 

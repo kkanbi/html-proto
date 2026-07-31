@@ -85,20 +85,17 @@ export function updateUsageDisplay() {
     const totalUsageEl = document.getElementById('totalUsage');
 
     if (totalUsageEl) {
-        totalUsageEl.textContent = `$${data.totalCost.toFixed(4)} (${data.totalRequests}회)`;
+        // 무료 티어(단가 0)에서는 금액 대신 호출 횟수와 토큰 수를 보여준다.
+        if (data.totalCost > 0) {
+            totalUsageEl.textContent = `$${data.totalCost.toFixed(4)} (${data.totalRequests}회)`;
+        } else {
+            const totalTokens = data.history.reduce(
+                (sum, entry) => sum + (entry.inputTokens || 0) + (entry.outputTokens || 0),
+                0
+            );
+            totalUsageEl.textContent = `${data.totalRequests}회 · ${totalTokens.toLocaleString()}토큰 (무료 티어)`;
+        }
     }
-}
-
-/**
- * Claude API 비용 계산
- * Claude Sonnet 4.5 pricing (2024):
- * Input: $3 per million tokens
- * Output: $15 per million tokens
- */
-export function calculateCost(inputTokens, outputTokens) {
-    const inputCost = (inputTokens / 1000000) * 3;
-    const outputCost = (outputTokens / 1000000) * 15;
-    return inputCost + outputCost;
 }
 
 /**
