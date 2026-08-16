@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>유토피아프로젝트</title>
+<style>
+:root {
+    --paper: #f6f2ea; --ink: #2b2722; --muted: #8a8177;
+    --line: rgba(0,0,0,0.12); --accent: #9a7b4f;
+    --size: 17px; --leading: 1.95; --measure: 34em;
+    --serif: "Nanum Myeongjo", "Apple SD Gothic Neo", "Malgun Gothic", serif;
+    --sans: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --font: var(--serif);
+}
+html[data-theme="sepia"] { --paper:#f2e6d0; --ink:#3a3026; --muted:#8d7a5f; --line:rgba(0,0,0,0.14); }
+html[data-theme="dark"]  { --paper:#17181a; --ink:#ddd8d0; --muted:#8b8681; --line:rgba(255,255,255,0.14); --accent:#c9a66b; }
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+/* .cover 처럼 display 를 지정한 요소는 hidden 속성만으로 안 숨는다 */
+[hidden] { display: none !important; }
+body {
+    background: var(--paper); color: var(--ink);
+    font-family: var(--font); font-size: var(--size); line-height: var(--leading);
+    -webkit-text-size-adjust: 100%;
+    transition: background .2s, color .2s;
+}
+html[data-font="sans"] { --font: var(--sans); }
+
+.bar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px;
+    background: color-mix(in srgb, var(--paper) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+}
+.bar-title {
+    flex: 1; min-width: 0; font-size: 13px; color: var(--muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bar button {
+    background: none; border: 1px solid var(--line); color: var(--muted);
+    border-radius: 6px; padding: 4px 9px; font-size: 12px; font-family: inherit;
+    cursor: pointer; white-space: nowrap;
+}
+.bar button:hover { color: var(--ink); border-color: var(--accent); }
+
+main { max-width: var(--measure); margin: 0 auto; padding: 0 22px 80px; }
+
+.cover { min-height: 78vh; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+.cover h1 { font-size: 2.1em; line-height: 1.4; margin: 0 0 18px; font-weight: 700; }
+.cover .sub { color: var(--muted); font-size: .95em; line-height: 1.9; margin: 0 auto 26px; max-width: 26em; }
+.cover .author { font-size: 1em; margin-bottom: 34px; }
+.cover .meta { color: var(--muted); font-size: .8em; letter-spacing: .04em; }
+.cover .start { margin-top: 34px; }
+.cover .start button {
+    background: var(--accent); color: #fff; border: 0; border-radius: 999px;
+    padding: 11px 30px; font-size: .92em; font-family: inherit; cursor: pointer;
+}
+
+.toc h3 { font-size: 1em; color: var(--muted); font-weight: 600; margin: 0 0 14px; }
+.toc ul { list-style: none; margin: 0; padding: 0; }
+.toc-item {
+    display: flex; align-items: baseline; gap: 12px; width: 100%;
+    padding: 12px 6px; background: none; border: 0; border-bottom: 1px solid var(--line);
+    color: inherit; font-family: inherit; font-size: .92em; text-align: left; cursor: pointer;
+}
+.toc-item:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.toc-item.read .toc-num { color: var(--accent); }
+.toc-num { flex-shrink: 0; color: var(--muted); font-size: .85em; min-width: 3.4em; }
+.toc-title { flex: 1; min-width: 0; }
+.toc-chars { flex-shrink: 0; color: var(--muted); font-size: .78em; }
+
+.chapter-head { margin: 30px 0 34px; text-align: center; }
+.chapter-num { color: var(--accent); font-size: .8em; letter-spacing: .1em; margin-bottom: 8px; }
+.chapter-head h2 { font-size: 1.35em; margin: 0; font-weight: 700; line-height: 1.5; }
+.chapter-body p { margin: 0 0 .35em; text-indent: 0; word-break: keep-all; }
+.chapter-body .blank { height: .9em; }
+.chapter-nav { display: flex; gap: 8px; margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--line); }
+.nav-btn {
+    flex: 1; padding: 11px 8px; background: none; border: 1px solid var(--line);
+    border-radius: 8px; color: var(--muted); font-family: inherit; font-size: .82em; cursor: pointer;
+}
+.nav-btn:hover { color: var(--ink); border-color: var(--accent); }
+.nav-btn:disabled { opacity: .32; cursor: default; }
+
+/* 좌우 넘김 모드 - 화면 하나가 한 쪽 */
+html[data-mode="page"] main { max-width: none; padding: 0; }
+html[data-mode="page"] .chapter:not([hidden]) {
+    height: calc(100vh - 46px);
+    column-width: 32em; column-gap: 46px;
+    padding: 26px 30px; overflow: hidden;
+}
+html[data-mode="page"] .chapter-nav { display: none; }
+html[data-mode="page"] .pager { display: flex; }
+.pager {
+    display: none; position: fixed; bottom: 0; left: 0; right: 0;
+    align-items: center; gap: 10px; padding: 8px 14px;
+    background: color-mix(in srgb, var(--paper) 92%, transparent);
+    border-top: 1px solid var(--line);
+}
+.pager button {
+    background: none; border: 1px solid var(--line); color: var(--muted);
+    border-radius: 6px; padding: 6px 14px; font-family: inherit; font-size: .8em; cursor: pointer;
+}
+.pager .pos { flex: 1; text-align: center; color: var(--muted); font-size: .75em; }
+
+.panel {
+    position: fixed; right: 12px; top: 52px; z-index: 20;
+    background: var(--paper); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px; width: 220px; box-shadow: 0 8px 28px rgba(0,0,0,.16);
+}
+.panel[hidden] { display: none; }
+.panel-row { display: flex; align-items: center; gap: 6px; margin-bottom: 9px; }
+.panel-row:last-child { margin-bottom: 0; }
+.panel-label { flex-shrink: 0; width: 3.6em; font-size: .72em; color: var(--muted); }
+.panel-row button {
+    flex: 1; padding: 5px 4px; background: none; border: 1px solid var(--line);
+    border-radius: 5px; color: var(--muted); font-family: inherit; font-size: .74em; cursor: pointer;
+}
+.panel-row button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+@media print {
+    .bar, .chapter-nav, .pager, .panel { display: none !important; }
+    .chapter[hidden] { display: block !important; }
+    .chapter { page-break-after: always; }
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+    <button data-home>표지</button>
+    <div class="bar-title" id="barTitle">유토피아프로젝트</div>
+    <button data-toc>목차</button>
+    <button data-panel>Aa</button>
+</div>
+
+<div class="panel" id="panel" hidden>
+    <div class="panel-row"><span class="panel-label">글자</span>
+        <button data-size="-1">작게</button><button data-size="1">크게</button></div>
+    <div class="panel-row"><span class="panel-label">글꼴</span>
+        <button data-font="serif">명조</button><button data-font="sans">고딕</button></div>
+    <div class="panel-row"><span class="panel-label">배경</span>
+        <button data-theme="light">밝게</button><button data-theme="sepia">종이</button><button data-theme="dark">어둡게</button></div>
+    <div class="panel-row"><span class="panel-label">넘김</span>
+        <button data-mode="scroll">스크롤</button><button data-mode="page">좌우</button></div>
+</div>
+
+<main>
+    <section class="cover" id="cover">
+        <h1>유토피아프로젝트</h1>
+        <p class="sub">로봇과의 멸망전에서 이동도시를 지키며 자란 남자가 자신이 살아온 지옥이 인간에게 행복을 가르치기 위한 교육장이었음을 알게 된 뒤, 욕구의 여러 단계를 통과하며 타인이 설계한 행복 대신 자신의 다음 삶을 선택할 자유를 찾아가는 이야기.</p>
+        
+        <div class="meta">5화 · 30,364자</div>
+        <div class="start"><button data-start>읽기 시작</button></div>
+    </section>
+
+    <section class="toc" id="toc" hidden>
+        <h3>목차</h3>
+        <ul>
+        <li><button class="toc-item" data-go="0">
+            <span class="toc-num">1화</span>
+            <span class="toc-title">사고 뒤의 마을</span>
+            <span class="toc-chars">6,024자</span>
+        </button></li>
+        <li><button class="toc-item" data-go="1">
+            <span class="toc-num">2화</span>
+            <span class="toc-title">다섯 명의 수색대</span>
+            <span class="toc-chars">5,256자</span>
+        </button></li>
+        <li><button class="toc-item" data-go="2">
+            <span class="toc-num">3화</span>
+            <span class="toc-title">빈 지휘석</span>
+            <span class="toc-chars">6,064자</span>
+        </button></li>
+        <li><button class="toc-item" data-go="3">
+            <span class="toc-num">4화</span>
+            <span class="toc-title">결정타를 넣지 않는 로봇</span>
+            <span class="toc-chars">5,653자</span>
+        </button></li>
+        <li><button class="toc-item" data-go="4">
+            <span class="toc-num">5화</span>
+            <span class="toc-title">정오</span>
+            <span class="toc-chars">7,367자</span>
+        </button></li></ul>
+    </section>
+
+    
+        <article class="chapter" data-index="0" hidden>
+            <header class="chapter-head">
+                <div class="chapter-num">1화</div>
+                <h2>사고 뒤의 마을</h2>
+            </header>
+            <div class="chapter-body">
+<p>밤은 언제나 서둘러 왔다.</p>
+<div class="blank"></div>
+<p>그날도 그랬다. 나는 열여섯이었고 너와 맞잡은 손은 뜨거웠다. 익숙한 체온과 땀이 손가락 사이에 엉겨 붙었다. 먼지에 덮인 마을의 낮은 언제나 짧았고 우리는 항상 해 지는 소리에 맞춰 달렸다. 내 손을 잡은 네가 언제나 앞서 달렸다.</p>
+<div class="blank"></div>
+<p>“레온, 조금만 더!”</p>
+<div class="blank"></div>
+<p>망루 아래로 마을 전체를 떠받친 철골이 덜컹거리면 멀리 보이는 지평선은 빠르게 지나갔다. 마을의 궤도가 방향을 틀 때마다 바닥은 기울었고 폐허 사이로 부는 바람도 함께 삐걱이는 금속을 흔들었다. 흙먼지가 기관지를 파고들어 눈을 깜빡여도 앞이 뿌옜다.</p>
+<div class="blank"></div>
+<p>불과 한 시간 전, 우리는 망루에 앉아 해가 지는 것을 봤다. 매일 보던 풍경이었다. 그런데 오늘 경보음은 다른 때와 달랐다. 엔진의 진동이 한층 격렬해졌고 발밑의 철골 구조물이 비명을 질렀다.</p>
+<div class="blank"></div>
+<p>허리춤의 무전기가 요란하게 울렸다. 마을 관제실의 목소리였다.</p>
+<div class="blank"></div>
+<p>“젠장, 경로가 또 막혔어… 레온! 서쪽 통로로 가지 마! 거기서 기다려. 구조대가 간다!”</p>
+<p>기다려? 서쪽 통로가 제일 가까운데. 경보가 울리고 모든 게 엉망인데 여기서 가만히 있으라고?</p>
+<div class="blank"></div>
+<p>“왜? 지금 바로 갈 수 있어!”</p>
+<div class="blank"></div>
+<p>“안 돼! 그대로 있어. 곧 데리러—”</p>
+<p>무전은 지직거리는 잡음과 함께 끊겼다.</p>
+<div class="blank"></div>
+<p>나는 네 손을 더 꽉 쥐었다.</p>
+<div class="blank"></div>
+<p>“뛰어!”</p>
+<div class="blank"></div>
+<p>앞서 달리던 네가 외쳤다. 우리는 서로의 손을 놓지 않고 엉겨 붙은 잔해를 헤치며 달렸다. 하늘은 여전히 붉었는데, 벌써 어둠이 바닥을 기고 있었다. 놈들이었다. 놈들은 밤을 데리고 왔다. 금속으로 만들어진 육중한 발소리가 뒤를 쫓았다. 놈들의 눈은 붉었고, 목적 없이 부유하는 드론은 섬광탄을 뿌렸다. 나는 네가 넘어진 순간, 놈들이 섬광탄 속에서 너를 향해 팔을 뻗는 것을 봤다.</p>
+<p>그순간, 나도 너에게 손을 뻗었다. 손끝이 닿을 듯한 순간, 몸이 기울며 달아오른 철골에 오른손이 쓸렸다. 엄지와 검지 사이로 살이 타는 통증이 번졌지만 아픈 줄도 몰랐다.</p>
+<p>손을 다시 뻗으려던 순간, 철컥. 장전 소리가 났다. 머리 위에서 섬광이 터지고, 등 뒤에서 육중한 금속 소리와 함께 내 팔을 강하게 잡아채는 손.</p>
+<div class="blank"></div>
+<p>“살았으면 뛰어!”</p>
+<div class="blank"></div>
+<p>로건이었다. 열아홉의 로건은 거대한 그림자처럼 내 앞을 가로막고 놈들을 향해 총을 쐈다. 연발 총성. 강철에 박히는 총알 소리. 그는 나를 끌고 달렸다. 나는 뒤를 돌아봤다. 뿌연 섬광 속에서 놈들은… 네게 다가갔다. 내 손이 너와 점점 멀어졌다. 목적지에 닿지 못한 손가락들은 겨우 허공을 움켜쥐었다. 안 돼. 안 돼.</p>
+<div class="blank"></div>
+<p>나는 몸을 틀려 했지만 로건은 한 번 더 내 팔을 잡아챘다. 그의 손은 굳은살이 박혀 있었고, 강철처럼 단단했다. 그가 다시 몸을 돌려 총을 쏘는 동안, 나는 네가 있던 자리에서 연기 같은 섬광이 피어오르는 것을 봤다. 아무것도 남지 않았다. 연기와 먼지뿐이었다. 목구멍이 컥 막혔다.</p>
+<div class="blank"></div>
+<p>로건은 나를 끌고 달리고 또 달렸다. 놈들의 발소리는 멀어졌고, 그의 거친 숨소리가 내 귓가에 맴돌았다. 피 냄새, 기름 냄새. 끈적한 어둠 속에서 나는 몇 번이나 쓰러졌다. 로건은 지친 나를 들쳐 업었다. 그의 등은 딱딱했다. 흙먼지 속에서 발소리가 질척였다. 팔다리에 힘이 풀리고 눈꺼풀이 천근만근이었다. 정신을 차려야 해. 난 살아야 해. 놈들은 밤을 데리고 오니까.</p>
+<div class="blank"></div>
+<p>하지만 몸은 명령을 듣지 않았다. 나는 로건의 등 위에서 의식을 놓았다. 차가운 바람, 멀어지는 로건의 등. 그리고 깊은 어둠.</p>
+<div class="blank"></div>
+<p>세상에 밤이 든다. 밤은 모든 것을 삼키고, 영원히 오지 않을 낮을 기다리게 한다.</p>
+<div class="blank"></div>
+<p>***</p>
+<div class="blank"></div>
+<p>“레온! 레온!”</p>
+<div class="blank"></div>
+<p>나는 눈을 떴다. 귓가에 맴도는 목소리는 로건이 아니었다. 카일이었다. 땀이 식은 몸이 으슬으슬 떨렸다. 내 눈꺼풀은 무거웠다. 나는 아직 그 끈적한 어둠 속에 갇혀 있는 것 같았다. 눈을 깜빡였다.</p>
+<div class="blank"></div>
+<p>“레온! 왜 그래? 출발해야 돼.”</p>
+<div class="blank"></div>
+<p>카일의 얼굴이 내 눈앞에 있었다. 햇빛과 먼지에 거칠어진 피부, 웃을 때 한쪽 입꼬리가 먼저 올라가는 그 녀석. 나는 습관처럼 오른손 엄지와 검지 사이에 난 흉터를 만졌다. 세 해가 지났는데도 그날 생긴 자국은 희미하게 남아 있었다.</p>
+<div class="blank"></div>
+<p>꿈을 꾼 게 틀림없었다. 망할.</p>
+<div class="blank"></div>
+<p>이곳은 솔라였다. 세 해 전, 내가 다시 눈을 떴던 거대한 이동 요새.</p>
+<p>내가 살던 고향도 움직이는 마을이었지만, 솔라는 규모부터 달랐다. 고향이 몇백 명을 싣고 달리는 낡은 이동촌이었다면 솔라는 그 자체로 하나의 도시였다.</p>
+<p>발밑에서 낮고 묵직한 진동이 계속 올라왔다. 솔라의 주행기관이 내는 진동이었다.  솔라는 마을이라기보다는 움직이는 철산에 가까웠다. 폐전차와 컨테이너, 무너진 건물의 철골을 수십 년 동안 덧붙여 만든 거대한 이동 요새. 바퀴라고 부르기엔 지나치게 큰 궤도 여섯 개가 도시 전체를 떠받치고 있었고, 중앙에는 밤낮없이 검은 연기를 토해내는 엔진탑이 솟아 있었다.  사람들은 그 위에 집을 짓고, 밭을 만들고, 아이를 키웠다.  그리고 솔라는 단 하루도 멈추지 않았다. 밤이 따라왔기 때문이다.</p>
+<div class="blank"></div>
+<p>내가 열여섯까지 살았던 고향의 흔적은 아무것도 찾을 수 없었다. 통신도 연결되지 않았다. 몇 번이나 시도하다 포기했다. 대징집 이후 스무 살 넘는 어른은 아무도 남지 않았고, 우리는 놈들을 피해 태양과 낮의 경계를 따라 끊임없이 이동해야 했다.</p>
+<div class="blank"></div>
+<p>“준비 끝. 이동.”</p>
+<div class="blank"></div>
+<p>나는 짧게 명령했다. 놈들이 이 경계를 넘으면 이곳은 곧 밤이 된다. 철과 피와 땀과 먼지가 뒤섞인 공간. 이제 나는 열아홉이었다.</p>
+<div class="blank"></div>
+<p>현재 수색대는 다섯 명이었다. 선두에 미라, 그 뒤를 노아와 에런이 따랐다. 나는 후미에서 카일과 함께 남았다. 이 작고 단단한 팀을 이끄는 건 내 몫이었다.</p>
+<div class="blank"></div>
+<p>“들었어? 바렉이 또 후미에서 셋을 끌고 나왔다더라.”</p>
+<div class="blank"></div>
+<p>카일이 중얼거렸다. 그의 말투는 늘 그랬다. 긴박할수록 오히려 사소한 농담이나 쓸데없는 소리를 늘어놓았다. 붉은 절연천으로 만든 손목끈이 그의 손목에서 흔들렸다.</p>
+<div class="blank"></div>
+<p>나는 대답하지 않았다. 바렉. 솔라의 총지휘관. 그는 우리와 같은 열아홉이었다. 나를 구해준 로건과 같은 나이. 로건의 냉정하고 계산이 빠른 판단력은 내게도 스며들었다. 나는 그처럼 사람을 숫자로만 보지 않으면서도, 모두가 살아나갈 순서를 찾으려 노력했다. 내가 판단을 멈추는 순간 사람들이 죽는다고 믿었다.</p>
+<div class="blank"></div>
+<p>“서부가 바렉이라면 동부의 전설은 사인이지.”</p>
+<div class="blank"></div>
+<p>“닥쳐. 전방 확인.”</p>
+<div class="blank"></div>
+<p>나는 카일의 말을 잘라냈다. 카일은 푸념을 늘어놓다가도 내 명령을 가장 잘 따랐다. 그가 고개를 끄덕이며 전방을 향해 낡은 소총을 들었다.</p>
+<div class="blank"></div>
+<p>어느새, 솔라의 후미 경사로가 지면에 닿자 수색대가 하나씩 내려섰다.</p>
+<p>거대한 이동 요새는 우리를 남겨둔 채 느린 속도로 계속 전진했다. 뒤를 돌아보면 수십 미터 높이의 철벽과 궤도가 먼지를 밀어 올리며 움직이고 있었다. 놓치면 끝이었다.</p>
+<div class="blank"></div>
+<p>우리는 태양이 닿지 않는 폐허 안쪽, 놈들의 영역으로 들어섰다. 퀴퀴한 곰팡이 냄새, 녹슨 철과 기름 냄새가 코를 찔렀다. 먼지는 기관지를 긁고 피부에 달라붙었다. 햇빛이 닿지 않는 거대한 폐기물 더미 사이를 조심스럽게 지나쳤다. 놈들의 발소리, 으르렁거리는 기계음이 저 멀리서 들려왔다.</p>
+<div class="blank"></div>
+<p>미라가 수신호를 보냈다. 놈들. 셋.</p>
+<div class="blank"></div>
+<p>“셋 세면 뛰어.”</p>
+<div class="blank"></div>
+<p>나는 동사부터 말했다. 미라는 고개를 끄덕였다. 작은 체구의 미라는 민첩하고 뛰는 속도가 빨랐다. 땀에 젖어 헝클어진 머리카락 사이로 아들이 만든 조잡한 금속 표식 목걸이가 보였다.</p>
+<div class="blank"></div>
+<p>탕! 미라가 먼저 움직였다. 그녀는 침착하게 놈들의 다리 관절을 노렸다. 놈들의 움직임이 둔해졌다.</p>
+<div class="blank"></div>
+<p>“뛰어!”</p>
+<div class="blank"></div>
+<p>내가 외쳤다. 에런과 노아가 미라 뒤를 따랐다. 노아는 또래보다 작고 가벼웠다. 좁은 잔해 틈을 빠져나간 그는 형인 에런의 뒤에 바싹 붙었다. 동생과 반쪽씩 나눈 금속 인식표가 노아의 목에, 에런의 목에 걸려 있었다. 에런은 늘 동생이 시야 안에 있는지 확인했다.</p>
+<div class="blank"></div>
+<p>나는 지시한 뒤 맨 마지막에 움직였다. 뒤처진 놈 하나가 총알을 맞고 휘청거렸다. 놈은 잠시 멈춰 서서 우리를 스캔하는 듯했다. 마치 공격 명령과 회수 명령 사이에서 갈등하는 것처럼. 하지만 곧 놈의 눈이 붉게 번쩍였고, 우리를 향해 육중한 팔을 휘둘렀다.</p>
+<div class="blank"></div>
+<p>“젠장!”</p>
+<div class="blank"></div>
+<p>카일이 욕설을 내뱉었다. 우리는 폐허 틈으로 몸을 던졌다. 놈의 팔이 휩쓸고 지나간 자리에 강철이 찢기는 굉음이 울렸다.</p>
+<div class="blank"></div>
+<p>“노아! 확인!”</p>
+<div class="blank"></div>
+<p>에런이 퉁명스럽게 외쳤다. 노아는 형에게 다친 티를 숨기려 했지만, 긴장하면 눈을 자주 깜빡이는 버릇은 어쩌지 못했다.</p>
+<div class="blank"></div>
+<p>나는 놈의 움직임을 계산했다. “왼쪽 골목. 셋.”</p>
+<div class="blank"></div>
+<p>이번에는 내가 먼저 달렸다. 놈의 몸통을 향해 총을 쏘고, 왼쪽 골목으로 몸을 날렸다. 놈의 붉은 눈이 잠시 나를 쫓았지만, 이내 잔해에 가려졌다.</p>
+<div class="blank"></div>
+<p>“젠장! 대장, 왜 맨날 혼자 나대!”</p>
+<div class="blank"></div>
+<p>카일의 불평이 이어졌지만, 그는 가장 빠르게 내 뒤를 따랐다. 우리는 폐허 깊숙한 곳으로 들어갔다. 철골이 뒤틀린 건물 내부에서 목적한 물자를 찾아냈다. 부서진 기계 부품. 솔라의 엔진 수리에 필요한 핵심 부품이었다.</p>
+<div class="blank"></div>
+<p>“확보. 복귀.”</p>
+<div class="blank"></div>
+<p>나는 짧게 말했다. 부품을 확보했다. 이제 남은 건 솔라가 사정거리 밖으로 빠지기 전에 되돌아가는 일이었다. 놈들은 느렸지만 지치지 않았다.</p>
+<p>필요한 건 손에 넣었다. 돌아오는 발걸음은 조금 가벼웠다. 햇빛은 여전히 강렬했고 멀리 솔라가 태양을 쫓아 느리게 전진하는 모습이 보였다. 거대한 궤도가 먼지를 길게 끌었고  수색대원들의 거친 숨소리가 어깨 너머로 들렸다.</p>
+<div class="blank"></div>
+<p>솔라에 올라탄 뒤 우리는 공동양육구역으로 향했다. 숙소도 그쪽에 있었다.</p>
+<p>공동양육구역은 솔라 중앙부의 오래된 화물칸들을 이어 만든 곳이었다. 창문 대신 철망이 박혀 있었고, 아이들이 그 위에 분필로 태양과 집을 그려놓았다. 도시가 흔들릴 때마다 천장에 매달린 장난감들이 딸랑거렸다. 그곳을 지날 때 낡은 벽보들이 덕지덕지 붙어 있는 철제 패널이 보였다. 모두 실종 아동들의 얼굴이었다. 오래된 종이 위에 새로운 종이가 겹쳐 붙어 있었다.</p>
+<div class="blank"></div>
+<p>“이번 달만 벌써 몇 번째냐.”</p>
+<div class="blank"></div>
+<p>카일이 중얼거렸다. 그가 이어폰을 두 번 두드렸다. 통신 상태가 좋지 않을 때 하는 버릇이었다.</p>
+<div class="blank"></div>
+<p>“루는 잘 있겠지?”</p>
+<div class="blank"></div>
+<p>미라가 혼잣말처럼 중얼거렸다. 그녀의 목소리는 차분했지만, 눈빛은 불안하게 흔들렸다. 루. 미라의 어린 양아들. 여섯 살짜리 꼬마. 루의 친부모는 전사 처리되었다고 알려져 있었고, 미라가 루를 입양했다. 솔라에서는 여러 주민이 함께 루를 돌봤지만, 미라는 특히 루에게 강한 애착을 보였다.</p>
+<div class="blank"></div>
+<p>우리가 공동양육구역에 도착했을 때, 입구에서 미라를 기다리는 루의 모습을 제일 먼저 볼 수 있었다. 루는 입구에 쪼그려 앉아 노아의 그림에 멋대로 선 하나를 덧붙이고 있었다. 노아가 폐허에서 베껴 온 복잡한 도면 한가운데 삐뚤빼뚤한 태양이 생겨 있었다. 미라는 그 모습을 보고서야 겨우 안도한 표정을 지었다.</p>
+<div class="blank"></div>
+<p>“배급 호출은 아직 없어?”</p>
+<p>노아가 형에게 물었다. 배급소는 항상 같은 시간, 같은 장소에서 열렸다.</p>
+<p>에런이 고개를 저었다.</p>
+<div class="blank"></div>
+<p>“아직.”</p>
+<div class="blank"></div>
+<p>솔라의 낮이 저물고 있었다. 멀리서 엔진이 굉음을 내며 속도를 줄이는 소리가 들렸다. ‘정오’의 시간이었다. 솔라에서 하루 한 번 엔진을 늦추는 휴식 시간. 실제 태양의 위치와는 상관없는, 언제부터인가 이렇게 부르기로 결정되버린 회복의 시간.</p>
+<p>정오가 되면 솔라는 잠시 마을이 됐다.</p>
+<p>엔진 속도가 떨어지고, 항상 귀를 때리던 금속음도 조금 잦아들었다. 누군가는 철제 난간에 빨래를 널었고, 아이들은 물 배급통 주변에서 맨발로 뛰었다. 정비병들은 기름 묻은 장갑을 벗고 뜨거워진 철판 위에 고기를 구웠다. 어디선가 미지근한 술 냄새가 풍겼다.</p>
+<p>하루 중 유일하게 사람들이 내일도 살아 있을 것처럼 행동하는 시간이었다.</p>
+<div class="blank"></div>
+<p>나는 폐기물 더미에 기댄 채 낡은 방호복을 벗었다. 땀과 먼지가 뒤섞인 몸이 끈적였다. 한숨을 쉬었다.</p>
+<div class="blank"></div>
+<p>그때, 무전이 터졌다. 바렉의 목소리였다. 낮고 분명한 단문.</p>
+<div class="blank"></div>
+<p>“레온. 긴급 호출. 지휘부. 지금 당장.”</p>
+<div class="blank"></div>
+<p>나는 미간을 찌푸렸다. 정오에 지휘부 호출? 그것도 긴급?</p>
+<div class="blank"></div>
+<p>“이런, 또 무슨 일이래?” 카일이 옆에서 혼잣말처럼 중얼거렸다.</p>
+<div class="blank"></div>
+<p>나는 대답 대신 자리에서 일어났다. 꿈 때문일까, 무심코 흉터를 지그시 누르고 있었다. 예측할 수 없는 상황에 좋지 않은 예감이 등줄기를 타고 흘렀다.</p>
+<div class="blank"></div>
+<p>그리고 그날 바렉이 내게 맡긴 임무는 하나였다.</p>
+<p>예정에 없던 야간 수색.</p>
+            </div>
+            <nav class="chapter-nav">
+                <button class="nav-btn" data-step="-1">← 이전 화</button>
+                <button class="nav-btn" data-toc>목차</button>
+                <button class="nav-btn" data-step="1">다음 화 →</button>
+            </nav>
+        </article>
+        <article class="chapter" data-index="1" hidden>
+            <header class="chapter-head">
+                <div class="chapter-num">2화</div>
+                <h2>다섯 명의 수색대</h2>
+            </header>
+            <div class="chapter-body">
+<p>“지휘부 긴급 호출. 야간 경계 수색. 지금 당장.”</p>
+<div class="blank"></div>
+<p>바렉의 목소리는 낮고 분명했다. 정오의 활기가 일순간 얼어붙었다. 나는 낡은 방호복을 다시 여몄다. 아직 따뜻한 엔진 열기가 잔해를 따라 퍼져오는 시간이었다. 평소라면 수비대가 내려와 잠시 숨을 고르는 시간. 하지만 지금은.</p>
+<div class="blank"></div>
+<p>“이런, 또 뭐가 터진 거야?”</p>
+<div class="blank"></div>
+<p>카일이 혼잣말처럼 중얼거렸다. 그의 얼굴에도 피곤한 기색이 역력했다.</p>
+<div class="blank"></div>
+<p>나는 대답하지 않았다. 누르고 있던 흉터가 쑤시는 듯한 착각이 느껴졌다. 예측할 수 없는 상황은 늘 그랬다. 등줄기를 타고 기어오르는 차가운 예감이 현실이 되는 건 순식간이었다.</p>
+<div class="blank"></div>
+<p>“출발 준비.”</p>
+<div class="blank"></div>
+<p>폐쇄된 외부 격벽이 굉음을 내며 열렸다. 낮의 온기는 사라지고 차가운 밤의 공기가 쏟아져 들어왔다. 먼지와 녹슨 철, 기계 기름 냄새가 섞인 비릿한 바람이 살갗을 파고들었다. 눈앞은 빛 하나 없는 어둠이었다. 우리는 헬멧의 야간 시야 모드를 켰다.</p>
+<div class="blank"></div>
+<p>“보고. 현재 구역 통제율 육십 퍼센트 미만. 로봇 세 개체 이상. 보급품 회수율 제로.”</p>
+<div class="blank"></div>
+<p>바렉의 목소리가 이어폰을 통해 흘러나왔다. 그는 도시 전체를 한눈에 파악하고 있었다.</p>
+<div class="blank"></div>
+<p>“수색대장은 레온. 이번 임무는 부품 회수와 실종자 수색. 퇴로는 후미 격벽. 돌아올 때까지 격벽은 열어둔다.”</p>
+<div class="blank"></div>
+<p>나는 고개를 끄덕였다. 바렉은 언제나 그랬다. 모두가 살아나갈 순서를 찾았다. 그는 인원, 거리, 시간을 계산하고 마지막 철수 인원까지 직접 확인하는 지휘관이었다. 로건이 그랬던 것처럼.</p>
+<div class="blank"></div>
+<p>미라가 선두에 섰다. 그녀의 표정은 늘 침착했다. 작고 단단한 체구는 어둠 속에서도 흔들림이 없었다. 그녀는 습관적으로 붕대를 세는 대신, 놈들의 움직임을 살피며 손짓으로 방향을 지시했다.</p>
+<div class="blank"></div>
+<p>“오른쪽. 폐기물 고정.”</p>
+<div class="blank"></div>
+<p>노아와 에런이 그 뒤를 따랐다. 노아는 바싹 긴장한 얼굴이었다. 그의 눈이 자주 깜빡였다.</p>
+<div class="blank"></div>
+<p>“겁먹었냐, 꼬맹아.”</p>
+<div class="blank"></div>
+<p>에런이 퉁명스럽게 말했다. 그의 목소리에는 걱정이 섞여 있었다.</p>
+<p>노아는 고개를 저었다.</p>
+<div class="blank"></div>
+<p>“아니거든! 내가 더 잘 찾을 수 있어.”</p>
+<div class="blank"></div>
+<p>나는 후미에서 카일과 함께 움직였다. 놈들의 육중한 발소리가 멀리서 들려왔다. 발소리는 밤에 더 커졌다. 아무것도 보이지 않아서인지, 놈들이 밤에만 나타나서인지 알 수 없었다.</p>
+<div class="blank"></div>
+<p>“젠장, 저거 봐. 또 저쪽으로 가고 있네.”</p>
+<div class="blank"></div>
+<p>카일이 중얼거렸다. 그가 가리킨 방향에는 어둠 속으로 희미하게 사라지는 붉은 눈이 있었다. 놈들은 격추 당한 작은 드론을 끌고 폐허 깊숙이 사라지고 있었다. 마치 부품이 아닌 생존자를 회수하는 것처럼.</p>
+<div class="blank"></div>
+<p>“..저렇게 수거하는 모습을 본 적이 한두번이 아님. 인간도 저렇게 납치한다는 소문이 있든데...”</p>
+<div class="blank"></div>
+<p>카일은 또 물어보지도 않은 정보를 말하며 목소리를 낮췄다.</p>
+<div class="blank"></div>
+<p>“아니면… 개조해서 자기들처럼 만들거나. 저번에 지하 장터에서 들었는데…”</p>
+<div class="blank"></div>
+<p>나는 그의 말을 잘라냈다.</p>
+<div class="blank"></div>
+<p>“그만. 전방 확인.”</p>
+<div class="blank"></div>
+<p>추상적인 이야기나 흉흉한 소문은 늘 사람을 더 겁먹게 했다. 우리는 눈앞의 적에 집중해야 했다.</p>
+<div class="blank"></div>
+<p>임무는 예상보다 험난했다. 수색 구역은 이전보다 더 복잡하게 얽혀 있었다. 낡은 철골이 무너져 내리고, 부서진 잔해들이 길을 막았다. 놈들의 수는 계속 늘어났다.</p>
+<div class="blank"></div>
+<p>“둘.”</p>
+<div class="blank"></div>
+<p>미라가 수신호를 보냈다. 놈들이었다. 육중한 로봇 두 개체가 폐허 사이에서 나타났다.</p>
+<div class="blank"></div>
+<p>“에런! 노아! 왼쪽 엄폐!” 내가 외쳤다.</p>
+<div class="blank"></div>
+<p>에런은 노아를 자신보다 먼저 밀어 넣었다. 총성이 울렸다. 에런이 놈들의 다리 관절을 노려 쏘았다. 놈들의 움직임이 둔해졌지만, 한 놈이 노아가 숨은 잔해 쪽으로 육중한 팔을 뻗었다.</p>
+<div class="blank"></div>
+<p>“노아!” 에런이 평정심을 잃고 외쳤다. 그는 동생을 보호하려 자신도 모르게 앞으로 나섰다.</p>
+<div class="blank"></div>
+<p>나는 재빠르게 움직였다. 놈의 뒤를 노렸다.</p>
+<div class="blank"></div>
+<p>“카일! 섬광!”</p>
+<div class="blank"></div>
+<p>카일은 내 말이 끝나기도 전에 섬광탄을 던졌다. 번쩍이는 섬광이 놈의 눈을 일시적으로 멀게 했다.</p>
+<p>그 틈을 타 나는 놈의 약점을 파고들었다. 연발 총성. 놈의 등에서 스파크가 튀었다. 휘청거리는 놈이 쓰러졌다.</p>
+<div class="blank"></div>
+<p>“뛰어!”</p>
+<div class="blank"></div>
+<p>우리는 목표 지점으로 달렸다. 좁은 통로가 나왔다. 노아의 작은 체구가 유리한 곳이었다.</p>
+<div class="blank"></div>
+<p>“노아. 먼저 들어가서 부품 위치 확인. 형이 뒤따른다.”</p>
+<div class="blank"></div>
+<p>노아는 겁먹은 티를 내지 않으려 허세를 부렸다.</p>
+<div class="blank"></div>
+<p>“걱정 마, 형! 나 잘하잖아!”</p>
+<div class="blank"></div>
+<p>그는 먼저 몸을 숙여 어둠 속으로 사라졌다. 에런은 여전히 노아가 시야 안에 있는지 확인하려 애썼다. 얼마나 지났을까. 어두운 좁은 통로 깊숙한 곳에서 밝은 노아의 목소리가 들렸다.</p>
+<div class="blank"></div>
+<p>“부품 탐색 및 검수 완료!”</p>
+<p>노아가 일부러 어른 흉내를 내듯 딱딱하게 외쳤다.</p>
+<p>우리는 서둘러 노아가 있는 장소로 향했다. 장소에 거의 다 다다랐을 무렵, 무전에서 바렉의 목소리가 들려왔다.</p>
+<div class="blank"></div>
+<p>“레온. 후미 격벽에 로봇 세 개체 접근 중. 회수 가능 시간 삼십 초. 그 후 강제 폐쇄.”</p>
+<div class="blank"></div>
+<p>삼십 초. 너무 짧았다.</p>
+<p>나는 주머니에 모은 작은 부품을 만지작거리는 노아를 봤다. 녀석은 쓸모 있는 대원으로 인정받고 싶어 했다. 겁이 많지만 겁쟁이로 보이기 싫어 먼저 나서는 아이. 내가 처음 구조된 그날처럼.</p>
+<p>아니. 나는 누구도 버리지 않았다. 버리지 않을 것이다.</p>
+<div class="blank"></div>
+<p>“카일! 부품 회수. 미라, 에런, 노아. 전속력으로 퇴로.”</p>
+<div class="blank"></div>
+<p>“레온, 삼십 초는 무리입니다!”</p>
+<div class="blank"></div>
+<p>미라가 차분하게 외쳤지만, 목소리에는 긴장이 서려 있었다.</p>
+<div class="blank"></div>
+<p>“젠장! 뛰어! 뛰어!”</p>
+<div class="blank"></div>
+<p>카일이 망설이는 팀원들을 밀었다.</p>
+<div class="blank"></div>
+<p>나는 맨 마지막에 움직였다. 뒤따라오던 놈들을 향해 마지막 탄창을 쏟아부었다. 놈들의 육중한 몸체가 굉음을 내며 쓰러졌다. 뜨겁게 달궈진 금속과 새어 나온 기름 냄새가 코를 찔렀다.</p>
+<p>나는 몸을 날리듯 격벽 안으로 뛰어들었다. 쾅! 격벽이 닫히는 소리가 등 뒤에서 울렸다.</p>
+<p>강철벽 너머에서 놈들의 으르렁거리는 기계음이 들렸다. 우리는 오늘도 간신히 살았다. 안도감이 밀려왔다.</p>
+<div class="blank"></div>
+<p>솔라의 생활 구역은 야간 경계와는 또 다른 세상이었다. 어둠 속에서도 희미하게 빛나는 창문들, 엔진의 진동과 사람들의 웅성거림. 하지만 어딘가 을씨년스러운 분위기는 가시지 않았다.</p>
+<div class="blank"></div>
+<p>“다들 고생했다.”</p>
+<div class="blank"></div>
+<p>내가 짧게 말했다.</p>
+<div class="blank"></div>
+<p>“해산. 배급소로.”</p>
+<div class="blank"></div>
+<p>배급소로 향하는 길. 공동양육구역 주변은 낮보다 더 삼엄했다. 어른 몇몇이 작은 손전등을 들고 골목을 지키고 있었다. ‘아동 단독 이동 금지’라는 낡은 표지판 아래, 새로 붙인 ‘자경조 순찰’이라는 글자가 눈에 띄었다.</p>
+<div class="blank"></div>
+<p>“아무래도 또 몇몇이 사라졌나 봐.”</p>
+<div class="blank"></div>
+<p>미라의 눈빛이 불안하게 흔들렸다.</p>
+<p>우리가 공동양육구역 앞을 지날 때, 루가 작은 손으로 유리창을 두드리고 있었다. 미라를 발견하자마자 작은 손을 흔들었다.</p>
+<p>미라가 유리창에 다가가 루의 손을 감쌌다. 그녀의 말끝이 조금 부드러워졌다.</p>
+<div class="blank"></div>
+<p>“엄마, 내일 해 뜨면 바로 올게. 약속해.”</p>
+<p>루는 고개를 끄덕였다. 작고 가느다란 손목에 미라가 만들어준 조잡한 금속 인식표가 빛났다.</p>
+<div class="blank"></div>
+<p>배급소는 시끄러웠다. 하루 종일 뛰어다닌 대원들은 허기에 지쳐 있었다.</p>
+<p>나는 배급표를 받았다. 자세히 보니 한구석에 볼펜으로 찍찍 그어진 이름이 보였다. 최근 사라진 어린 대원의 이름이었다. 나는 무심하게 종이를 구겼다. 전쟁터에서 실종은 특별한 일이 아니었다.</p>
+<div class="blank"></div>
+<p>우리는 다섯 명의 몫을 받아 구석진 탁자에 자리를 잡았다. 따뜻한 죽과 딱딱한 보존식. 하루 종일 뛰어다닌 몸이 뒤늦게 허기를 호소했다.</p>
+<div class="blank"></div>
+<p>“오늘따라 죽이 더 짭짤하네.”</p>
+<div class="blank"></div>
+<p>카일이 숟가락으로 죽을 휘저었다.</p>
+<div class="blank"></div>
+<p>“징집병 식단은 원래 다 그래.”</p>
+<div class="blank"></div>
+<p>에런이 퉁명스럽게 답했다.</p>
+<div class="blank"></div>
+<p>“징집병이 아니라 정찰대 식단이겠지!”</p>
+<div class="blank"></div>
+<p>노아가 발끈했다.</p>
+<div class="blank"></div>
+<p>“어차피 똑같은 거 아니냐? 대징집 이후로 계속 이거 먹고 있는데.”</p>
+<div class="blank"></div>
+<p>카일이 대수롭지 않게 어깨를 으쓱였다.</p>
+<div class="blank"></div>
+<p>나는 죽을 한 숟가락 떠 입에 넣었다. 짭짤하고 뜨거웠다. 조금 전까지 차가운 밤공기 속에서 놈들의 기계음을 듣고 있었다는 사실이 거짓말처럼 멀어졌다.</p>
+<div class="blank"></div>
+<p>“야, 카일. 너 또 제일 큰 거 골랐지?”</p>
+<p>노아가 카일의 그릇을 노려봤다.</p>
+<div class="blank"></div>
+<p>카일은 고기 조각 하나를 숟가락으로 가리며 능청스럽게 웃었다.</p>
+<div class="blank"></div>
+<p>“오늘 내가 제일 많이 뛰었잖아.”</p>
+<p>“맨날 그 소리 하잖아!”</p>
+<p>“닥쳐, 꼬맹아.”</p>
+<div class="blank"></div>
+<p>에런이 노아의 머리를 가볍게 쥐어박았다.</p>
+<div class="blank"></div>
+<p>노아가 입을 삐죽였다.</p>
+<p>카일은 잠시 제 그릇을 내려다보다가 한숨을 내쉬었다.</p>
+<div class="blank"></div>
+<p>“빌어먹을. 됐다.”</p>
+<div class="blank"></div>
+<p>큼지막한 고기 조각이 노아의 죽 위로 툭 떨어졌다.</p>
+<p>노아가 눈을 동그랗게 떴다.</p>
+<div class="blank"></div>
+<p>“뭐야.”</p>
+<p>“싫으면 내놔.”</p>
+<p>“누가 싫대?”</p>
+<div class="blank"></div>
+<p>노아는 서둘러 고기를 입에 넣었다. 에런이 피식 웃었다.</p>
+<div class="blank"></div>
+<p>늘 좋은 것을 먼저 찾아내고, 결국 남에게 넘겨주는 카일의 버릇은 변하지 않았다.</p>
+<div class="blank"></div>
+<p>맞은편의 미라는 자신의 몫을 절반쯤 덜어 작은 용기에 담고 있었다.</p>
+<div class="blank"></div>
+<p>“루 거야?”</p>
+<div class="blank"></div>
+<p>내가 묻자 미라가 고개를 끄덕였다.</p>
+<div class="blank"></div>
+<p>“약속했으니까.”</p>
+<div class="blank"></div>
+<p>피곤할 때마다 깨무는 버릇 때문인지 그녀의 아랫입술이 희게 질려 있었다.</p>
+<div class="blank"></div>
+<p>내일 해가 뜨면 루에게 가져다줄 음식. 다음 정오에는 또 고기 한 조각을 두고 다툴 노아와 카일. 에런은 그런 노아를 욕하면서도 자기 몫을 슬쩍 밀어줄 테고, 미라는 아무 말 없이 필요한 것부터 챙길 것이다.</p>
+<div class="blank"></div>
+<p>별것 아닌 일들이었다. 우리는 늘 죽음과 삶의 경계에서 아슬아슬하게 돌아와서는 이런 사소한 것들을 두고 투닥거렸다. 누가 고기를 더 먹었는지, 내일 누가 배급을 먼저 받을지, 죽이 어제보다 짠지 아닌지. 조금 전까지 서로의 목숨을 걱정하며 총을 쏘던 사람들이 맞나 싶을 정도였다.</p>
+<div class="blank"></div>
+<p>나는 그런 시간이 싫지 않았다. 아니, 어쩌면 이런 순간을 위해 밤마다 총을 들고 있는지도 몰랐다.</p>
+<div class="blank"></div>
+<p>차가운 밤공기와 놈들의 기계음은 아직 귓가에 남아 있었다. 손가락 끝에는 방아쇠의 감각도 희미하게 남아 있었다. 하지만 따뜻한 죽 한 그릇은 모든 감각을 다시 이곳으로 끌어당겼다. 짭짤하고 뜨거운 맛. 살아 있는 사람들의 목소리. 노아의 볼멘소리와 카일의 웃음, 에런의 욕설, 미라가 작은 용기의 뚜껑을 닫는 소리.</p>
+<div class="blank"></div>
+<p>놈들은 이런 걸 알까. 죽음 바로 옆에서조차 내일 먹을 고기 한 조각을 걱정하고, 돌아가 기다리는 사람의 몫을 챙기고, 별것 아닌 농담으로 웃는 것. 우리는 살아남았다. 오늘은 그것으로 충분했다.</p>
+<div class="blank"></div>
+<p>나는 남은 죽을 천천히 삼켰다.</p>
+<div class="blank"></div>
+<p>식사를 마치고 자리에서 일어서려는데 구겨두었던 배급표가 바닥으로 떨어졌다. 주우려 몸을 숙였다. 펼쳐진 종이 한구석, 볼펜으로 몇 번이나 그어 지운 이름 하나가 다시 눈에 들어왔다.</p>
+<div class="blank"></div>
+<p>조금 전에는 별생각 없이 넘겼던 이름이었다. 최근 사라진 어린 대원. 전쟁터에서 실종은 특별한 일이 아니었다. 그래서 나 역시 이름을 보고도 대수롭지 않게 넘겼다.</p>
+<div class="blank"></div>
+<p>나는 무심코 그 이름을 다시 읽었다.</p>
+<div class="blank"></div>
+<p>그리고 손이 멈췄다.</p>
+<div class="blank"></div>
+<p>잠깐.</p>
+<div class="blank"></div>
+<p>기억을 더듬었다.</p>
+<div class="blank"></div>
+<p>이상했다.</p>
+<div class="blank"></div>
+<p>그 아이는 실종자가 아니었다.</p>
+<div class="blank"></div>
+<p>사흘 전.</p>
+<div class="blank"></div>
+<p>분명 사망 처리된 아이였다.</p>
+            </div>
+            <nav class="chapter-nav">
+                <button class="nav-btn" data-step="-1">← 이전 화</button>
+                <button class="nav-btn" data-toc>목차</button>
+                <button class="nav-btn" data-step="1">다음 화 →</button>
+            </nav>
+        </article>
+        <article class="chapter" data-index="2" hidden>
+            <header class="chapter-head">
+                <div class="chapter-num">3화</div>
+                <h2>빈 지휘석</h2>
+            </header>
+            <div class="chapter-body">
+<p>전방 지휘구역의 금속성 경고음이 낮고 끈질기게 울렸다. 로봇의 무전 신호가 계속 잡힌다는 뜻이었다. 창밖으로는 붉은 노을이 도시의 철골을 불길처럼 태우고 있었다.</p>
+<div class="blank"></div>
+<p>수색이 끝난 날부터 이틀 뒤, 외곽 방어선 앞에 사람들이 몰려 있었다. 사라진 아이들을 함께 키우던 이들이었다.</p>
+<div class="blank"></div>
+<p>“이번 달만 벌써 몇 번째입니까!”</p>
+<div class="blank"></div>
+<p>미라가 목이 쉬도록 소리쳤다. 한 손은 곁에 선 루의 손목을 단단히 붙잡고 있었다. 너무 세게 쥐었는지 루가 작게 몸을 뒤척였지만, 미라는 손을 놓지 않았다.</p>
+<div class="blank"></div>
+<p>“벽보만 새로 붙이면 끝이에요? 오늘은 남의 아이였지만, 내일은 루일 수도 있잖아요!”</p>
+<div class="blank"></div>
+<p>미라의 옆에 있던 남자는 주먹으로 격벽을 쾅쾅 두드렸다. 분노와 절망이 차벽 너머까지 고스란히 전해졌다. 아동 자경조 몇 명이 작은 손전등을 흔들며 사람들을 진정시키려 했지만, 공동양육구역에서 번져온 불안은 쉽게 가라앉지 않았다.</p>
+<div class="blank"></div>
+<p>아이들의 실종은 그날 이후 더 잦아졌다. 사흘 전 사망 처리된 아이의 이름이 왜 실종자 명단에 있었는지 확인하고 싶었지만, 그럴 틈이 없었다. 하루가 멀다 하고 새로운 이름이 명단에 추가됐다.</p>
+<div class="blank"></div>
+<p>바렉은 지휘 구역의 통창을 통해 사람들을 내려다보고 있었다. 그의 표정은 침착하고 단호했다. 낮고 분명한 단문이 무전기를 통해 들려왔다.</p>
+<div class="blank"></div>
+<p>“알고 있다. 현재 도시 방어선은 위험하다. 추가 수색은 불가능하다. 하지만.”</p>
+<div class="blank"></div>
+<p>바렉의 목소리에는 위기 속에서도 사람을 안심시키는 확신이 있었다.</p>
+<div class="blank"></div>
+<p>“나는 너희의 아이들을 잊지 않는다. 전방 지휘와 별개로 추가 수색대를 투입할 것이다. 해가 뜨면. 약속한다.”</p>
+<div class="blank"></div>
+<p>사람들의 웅성거림이 조금 잦아들었다. 지휘관의 말이 희망처럼 퍼져나갔다. 스무 살이 되기 전 사라지는 사람들의 명단은 늘 길었다. 대징집 이후 어른들은 거의 없었다. 바렉은 우리가 기댈 수 있는 몇 안 되는 어른 같은 어른이었다.</p>
+<div class="blank"></div>
+<p>그때였다. 쾅!</p>
+<div class="blank"></div>
+<p>강철 방어선이 엄청난 충격을 받았다. 도시 전체가 흔들렸다. 엔진의 굉음이 비명을 질렀다.</p>
+<p>“젠장, 또 터진 거야?” 카일이 옆에서 중얼거렸다. 그의 얼굴은 피곤했지만, 눈은 이미 주변을 살피고 있었다.</p>
+<p>“로봇 기습! 전방 방어선 돌파!” 통신병의 다급한 외침이 이어폰을 찢을 듯 터져 나왔다.</p>
+<div class="blank"></div>
+<p>바렉은 지휘 완장을 고쳐 맸다. 낡은 흰색 완장은 그의 팔목에서 유일하게 빛났다.</p>
+<div class="blank"></div>
+<p>“전방 방어 인원, 후퇴. 사격 중지. 추가 공격 대기.”</p>
+<div class="blank"></div>
+<p>바렉의 명령은 낮고 분명했다. 그는 언제나 사람의 이름을 먼저 부른 뒤 명령했지만, 지금은 그럴 시간조차 없었다. 이럴 때 그는 늘 맨 마지막에 움직였다. 로건이 그랬던 것처럼.</p>
+<div class="blank"></div>
+<p>루를 끌어안고 있던 미라는 대피구역 쪽으로 루를 밀어 넣었다. 아이가 안쪽으로 사라지는 것을 끝까지 확인한 뒤에야 몸을 돌렸다. 평소보다 한 박자 늦었다.</p>
+<div class="blank"></div>
+<p>“오른쪽 셋. 왼쪽 둘. 정찰형 섞여 있어.”</p>
+<div class="blank"></div>
+<p>목소리는 침착했지만 숨이 조금 가빴다.</p>
+<div class="blank"></div>
+<p>에런은 노아를 폐기물 더미 뒤로 밀어 넣었다. 이번에는 평소처럼 잔소리하지 않았다. 대신 노아의 어깨를 한 번 세게 쥐었다가 놓았다.</p>
+<div class="blank"></div>
+<p>“여기서 나오지 마.”</p>
+<div class="blank"></div>
+<p>노아가 입을 열려 했지만 에런은 이미 총을 들고 전방을 향하고 있었다.</p>
+<div class="blank"></div>
+<p>놈들의 금속 발소리가 지축을 울렸다. 붉은 눈이 잔해 사이로 하나둘 떠올랐다. 정찰 드론이 머리 위를 스치며 섬광탄을 떨어뜨렸다.</p>
+<div class="blank"></div>
+<p>“총원, 사격 대기.”바렉의 목소리가 통신망을 눌렀다.</p>
+<div class="blank"></div>
+<p>“놈들 이동 경로부터 본다.”</p>
+<div class="blank"></div>
+<p>“동쪽 모듈 적재량 과부하! 고정 볼트 이완!”</p>
+<div class="blank"></div>
+<p>통신병의 보고가 끝나기도 전에 바렉이 말했다.</p>
+<p>“모듈 절단 준비. 구조팀 먼저 투입.”</p>
+<div class="blank"></div>
+<p>도시가 속도를 잃으면 외곽부터 버려야 했다. 바렉은 언제나 그 순서를 사람부터 계산했다.</p>
+<p>그 순간 거대한 섬광이 지휘구역을 삼켰다.</p>
+<div class="blank"></div>
+<p>굉음.</p>
+<div class="blank"></div>
+<p>강철 벽이 안쪽으로 찢겨 들어왔다.</p>
+<div class="blank"></div>
+<p>“지휘부 피격!”</p>
+<p>먼지와 열기가 한꺼번에 밀려왔다. 통신망이 짧게 비명을 지르더니 끊겼다.</p>
+<div class="blank"></div>
+<p>“바렉 지휘관님!”</p>
+<p>대답이 없었다.</p>
+<div class="blank"></div>
+<p>“통신 확인!”</p>
+<p>지직거리는 잡음뿐이었다.</p>
+<div class="blank"></div>
+<p>카일의 얼굴에서 처음으로 장난기가 사라졌다.</p>
+<p>“바렉.”</p>
+<div class="blank"></div>
+<p>그가 다시 불렀지만 아무도 대답하지 않았다.</p>
+<p>사람들이 나를 보고 있었다. 아무도 움직이지 않았다.</p>
+<p>그 순간 오래전 그날이 떠올랐다. 내가 한 발 늦었던 순간.</p>
+<p>다시는 그러고 싶지 않았다.</p>
+<div class="blank"></div>
+<p>“비상 지휘 규정 4항 발동. 현장 최고 선임 레온에게 전방 지휘권 인계.”</p>
+<div class="blank"></div>
+<p>첫 번째 공세가 잠시 꺾였다. 나는 파괴된 지휘구역의 잔해를 헤치고 안쪽으로 들어갔다. 바렉이 앉아 있던 자리는 뻥 뚫려 있었다. 사람 하나가 사라졌는데 남은 건 찢어진 좌석과 빈자리뿐이었다. 낡은 흰색 지휘 완장만 철판 조각 아래에 반쯤 깔려 있었다.</p>
+<p>나는 그것을 한 번 바라본 뒤 부서진 지휘석에 앉았다.</p>
+<div class="blank"></div>
+<p>“미라, 부상자부터 빼.”</p>
+<div class="blank"></div>
+<p>미라는 루가 사라진 대피구역을 마지막으로 한 번 돌아본 뒤 곧장 잔해 속으로 뛰어들었다.</p>
+<div class="blank"></div>
+<p>“에런, 서쪽 외벽. 접근하는 놈들 관절만 끊어.”</p>
+<div class="blank"></div>
+<p>“알겠습니다.”</p>
+<div class="blank"></div>
+<p>에런은 평소처럼 노아를 돌아보지 않았다. 대신 총을 고쳐 쥔 손에 힘이 들어갔다.</p>
+<div class="blank"></div>
+<p>“카일, 동쪽 모듈 고정. 안 되면 바로 버려.”</p>
+<div class="blank"></div>
+<p>카일이 입술을 핥았다.</p>
+<div class="blank"></div>
+<p>“새 대장이 첫날부터 사람 부려먹네.”</p>
+<div class="blank"></div>
+<p>농담은 했지만 웃지 않았다. 그는 곧장 인원들을 끌고 동쪽으로 뛰었다.</p>
+<div class="blank"></div>
+<p>“노아.”</p>
+<div class="blank"></div>
+<p>폐기물 뒤에서 작은 얼굴이 튀어나왔다.</p>
+<div class="blank"></div>
+<p>“드론만 봐. 공격하지 말고 경로만 알려.”</p>
+<div class="blank"></div>
+<p>노아는 잠깐 굳었다가 세게 고개를 끄덕였다.</p>
+<div class="blank"></div>
+<p>“할 수 있어.”</p>
+<div class="blank"></div>
+<p>전투는 오래 이어지지 않았다. 오래 느껴졌을 뿐이었다.</p>
+<div class="blank"></div>
+<p>에런이 전방의 다리를 끊으면 남은 사격조가 마무리했다. 미라는 쓰러진 사람을 끌어내면서도 누구부터 옮겨야 할지 한 번도 망설이지 않았다. 카일은 동쪽 모듈에서 욕설을 퍼부으며 고정 장치를 다시 물렸다.</p>
+<div class="blank"></div>
+<p>그리고 노아의 목소리가 통신망에 끼어들었다.</p>
+<div class="blank"></div>
+<p>“대장! 오른쪽 드론 셋, 같은 경로로 돌아가! 뒤쪽에 빈 구역 있어!”</p>
+<div class="blank"></div>
+<p>나는 화면을 확인했다.</p>
+<p>맞았다.</p>
+<div class="blank"></div>
+<p>“전방 사격 중지. 오른쪽 통로 열어.”</p>
+<div class="blank"></div>
+<p>놈들이 열린 길로 몰렸다.</p>
+<div class="blank"></div>
+<p>“지금.”</p>
+<div class="blank"></div>
+<p>집중 사격이 쏟아졌다.</p>
+<p>붉은 눈들이 하나씩 꺼졌다.</p>
+<p>마지막 기계음이 끊긴 뒤에도 한동안 아무도 움직이지 않았다.</p>
+<p>카일이 동쪽 모듈에서 돌아왔다. 얼굴과 팔이 기름투성이였다.</p>
+<div class="blank"></div>
+<p>“젠장. 간신히 막았네.”</p>
+<div class="blank"></div>
+<p>그는 숨을 몰아쉬다가 씨익 웃으며 나를 한번 훑어봤다.</p>
+<div class="blank"></div>
+<p>“봤냐, 새 대장? 나 없었으면 동쪽은 진작 떨어져 나갔다.”</p>
+<div class="blank"></div>
+<p>나는 대답하지 않았다.</p>
+<div class="blank"></div>
+<p>폐기물 뒤에서 나온 노아는 아직도 손이 떨리고 있었다. 그런데도 형보다 먼저 내 쪽을 봤다.</p>
+<div class="blank"></div>
+<p>“내가 찾은 길 맞았지?”</p>
+<div class="blank"></div>
+<p>“맞았어.”</p>
+<div class="blank"></div>
+<p>그 한마디에 녀석의 어깨가 아주 조금 펴졌다.</p>
+<div class="blank"></div>
+<p>에런은 그런 노아를 보고도 이번에는 타박하지 않았다. 말없이 녀석의 헬멧 위에 손을 얹었다가 곧 치웠다.</p>
+<div class="blank"></div>
+<p>미라는 피 묻은 손으로 장갑을 벗었다. 가장 먼저 한 일은 루가 있는 대피구역 쪽을 확인하는 것이었다.</p>
+<p>도시는 아직 달리고 있었다. 속도는 떨어졌고 외곽 모듈 몇 곳은 붉게 점멸했다. 첫 공격에서 가까스로 버틴 방어선도 곳곳이 뜯겨 나가 있었다.</p>
+<p>잠깐의 정적이 흘렀다.</p>
+<p>그리고 모든 경고등이 동시에 켜졌다.</p>
+<div class="blank"></div>
+<p>“대장님. 동쪽, 서쪽, 후미에서 추가 신호!”</p>
+<div class="blank"></div>
+<p>통신병의 목소리가 갈라졌다.</p>
+<p>외부 스크린에 하나둘 붉은 점이 나타났다. 곧 셀 수 없을 만큼 늘어났다. 첫 공격은 끝난 게 아니었다. 놈들은 흩어져 있던 개체를 모아 도시 전체를 따라붙고 있었다.</p>
+<div class="blank"></div>
+<p>“개체 수는?”</p>
+<div class="blank"></div>
+<p>“확인 불가입니다. 계속 늘어납니다.”</p>
+<div class="blank"></div>
+<p>쾅!</p>
+<p>서쪽 방어벽이 안쪽으로 휘었다. 천장에서 녹슨 볼트가 우수수 떨어졌다. 이번에는 몇 대를 쓰러뜨리고 끝낼 수 있는 공격이 아니었다. 도시를 멈추려는 공격이었다.</p>
+<p>나는 화면을 훑었다. 동쪽 외곽 모듈의 고정 장치가 다시 붉게 변하고 있었다. 조금 전 카일이 억지로 살려낸 곳이었다.</p>
+<div class="blank"></div>
+<p>“카일, 동쪽 모듈 상태.”</p>
+<div class="blank"></div>
+<p>잡음 뒤로 그의 거친 숨소리가 들렸다.</p>
+<div class="blank"></div>
+<p>“엉망이지. 한 번 더 크게 맞으면 떨어진다. 그래도 인원 붙이면 버틸 순 있어.”</p>
+<div class="blank"></div>
+<p>“인원 빼.”</p>
+<div class="blank"></div>
+<p>잠깐 침묵이 흘렀다.</p>
+<div class="blank"></div>
+<p>“뭐?”</p>
+<div class="blank"></div>
+<p>“동쪽 모듈 포기. 고정 해제하고 전원 후퇴.”</p>
+<div class="blank"></div>
+<p>카일의 욕설이 작게 들렸다.</p>
+<div class="blank"></div>
+<p>“저걸 버리면 속도 떨어져. 놈들이 더 따라붙는다고.”</p>
+<div class="blank"></div>
+<p>“알아.”</p>
+<div class="blank"></div>
+<p>나는 화면에서 동쪽 모듈 안의 인원 표시를 확인했다. 열두 명.</p>
+<div class="blank"></div>
+<p>“사람부터 빼.”</p>
+<div class="blank"></div>
+<p>카일이 더는 대꾸하지 않았다.</p>
+<div class="blank"></div>
+<p>“……젠장. 알았어.”</p>
+<div class="blank"></div>
+<p>동쪽 모듈의 표시등이 하나씩 꺼졌다.</p>
+<p>그 순간 에런의 다급한 목소리가 들어왔다.</p>
+<div class="blank"></div>
+<p>“서쪽 외벽 균열! 두 대 진입합니다!”</p>
+<div class="blank"></div>
+<p>“뒤로 물러나. 잡으려고 하지 마. 통로 셋까지 내줘.”</p>
+<div class="blank"></div>
+<p>“통로를 내준다고요?”</p>
+<div class="blank"></div>
+<p>“셋까지만. 넷째에서 막아.”</p>
+<div class="blank"></div>
+<p>에런이 짧게 숨을 삼켰다.</p>
+<div class="blank"></div>
+<p>“알겠습니다.”</p>
+<div class="blank"></div>
+<p>나는 노아가 보내오는 드론 경로를 화면 위에 겹쳤다. 작은 점들이 이상할 정도로 일정한 방향으로 쏠리고 있었다. 놈들은 가장 약해진 곳을 향해 무작정 몰리는 게 아니었다. 도시의 속도가 떨어질 때마다 정확하게 따라붙고 있었다.</p>
+<p>노아의 목소리가 들렸다.</p>
+<div class="blank"></div>
+<p>“대장! 뒤쪽 드론들, 또 같은 방향으로 돌아가! 아까랑 똑같아!”</p>
+<div class="blank"></div>
+<p>“계속 봐. 바뀌면 바로 말해.”</p>
+<div class="blank"></div>
+<p>“응!”</p>
+<div class="blank"></div>
+<p>두 번째 충격이 도시를 뒤흔들었다.</p>
+<p>이번에는 전방 조명이 절반쯤 꺼졌다. 어둠 속에서 비명과 기계음이 한꺼번에 터져 나왔다.</p>
+<p>미라의 목소리가 통신망에 섞였다.</p>
+<div class="blank"></div>
+<p>“후송로 막혔어! 부상자 셋 이동 불가!”</p>
+<div class="blank"></div>
+<p>나는 지도를 확대했다. 가장 가까운 우회로는 서쪽 통로였다. 방금 에런에게 내주라고 한 곳이었다.</p>
+<p>잠깐 망설였다.</p>
+<p>그 통로를 다시 확보하려면 병력을 돌려야 했다. 그러면 정면이 약해진다.</p>
+<div class="blank"></div>
+<p>“에런, 넷째 통로 유지. 셋째 통로는 의료팀이 지나갈 때까지만 다시 잡아.”</p>
+<div class="blank"></div>
+<p>“시간 얼마나 필요합니까?”</p>
+<div class="blank"></div>
+<p>미라가 먼저 대답했다.</p>
+<div class="blank"></div>
+<p>“일 분.”</p>
+<div class="blank"></div>
+<p>“삼십 초 줄게.”</p>
+<div class="blank"></div>
+<p>에런이 말했다.</p>
+<div class="blank"></div>
+<p>“그 안에 지나가.”</p>
+<div class="blank"></div>
+<p>총성이 몰아쳤다.</p>
+<p>외부 화면 한쪽이 새하얗게 번졌다. 에런의 분대가 밀려드는 놈들을 억지로 밀어내는 동안 미라가 부상자들을 끌고 좁은 통로를 빠져나왔다.</p>
+<p>삼십 초가 지나자 에런이 다시 물러났다.</p>
+<p>우리는 방어선을 지킨 게 아니었다. 하나씩 내주며 살아남을 공간을 사고 있었다.</p>
+<p>동쪽 모듈에서 마지막 인원이 빠져나왔다는 신호가 떴다.</p>
+<div class="blank"></div>
+<p>“동쪽 전원 철수 완료!”</p>
+<div class="blank"></div>
+<p>“절단.”</p>
+<div class="blank"></div>
+<p>내가 말했다.</p>
+<p>잠시 뒤 도시의 옆구리에서 거대한 금속음이 울렸다. 조금 전까지 우리가 지키던 모듈이 연결부에서 뜯겨 나갔다. 불빛이 켜진 채 뒤로 밀려난 구조물이 어둠 속으로 사라졌다.</p>
+<p>카일의 목소리가 낮게 흘러나왔다.</p>
+<div class="blank"></div>
+<p>“저거 고치느라 나 오늘 죽을 뻔했는데.”</p>
+<div class="blank"></div>
+<p>“살아 있잖아.”</p>
+<div class="blank"></div>
+<p>잠시 침묵.</p>
+<div class="blank"></div>
+<p>“그건 그렇네.”</p>
+<div class="blank"></div>
+<p>도시가 가벼워지자 엔진음이 높아졌다. 속도가 조금씩 회복됐다. 외부 화면을 가득 채우던 붉은 점들이 하나둘 뒤로 밀려나기 시작했다.</p>
+<div class="blank"></div>
+<p>“놈들 거리 벌어집니다!”</p>
+<div class="blank"></div>
+<p>통신병의 외침과 동시에 여기저기서 눌러왔던 숨이 터져 나왔다. 완전히 끝난 것은 아니었다. 외곽에서는 여전히 간헐적인 총성이 이어졌지만, 총공습은 한풀 꺾였다.</p>
+<div class="blank"></div>
+<p>그때, 전방 지휘구역의 외부 통신망이 다시 열렸다. 지휘구역 주변으로 수많은 그림자들이 다가오고 있었다. 아이를 잃은 부모들이었다. 그들은 다시금 우리를 향해 소리치기 시작했다. 밤새 이어진 공격으로 지친 그들의 목소리는 절규에 가까웠다.</p>
+<div class="blank"></div>
+<p>“레온 대장님! 지금 이런 말을 꺼낼 때가 아닌 건 압니다. 그래도… 우리 아이들을 찾아주겠다고 다시 약속해주실 수 있나요?”</p>
+<div class="blank"></div>
+<p>나는 대답하지 않았다. 약속은 이제 내가 지켜야 할 몫이었다. 지휘석에 앉아 있는 것만으로도 바렉이 남긴 무게가 느껴졌다. 그것은 단순히 지휘관의 자리가 아니었다. 도시의 아이들, 그들의 부모, 그리고 내가 잃었던 모든 것의 무게가 한꺼번에 내 어깨를 짓눌렀다. 나는 오른손을 들어 왼손 엄지와 검지 사이의 흉터를 다시 한번 눌렀다. 피가 맺히는 것 같았다. 하지만 아픔은 느껴지지 않았다. 그저 무겁고, 차가운 공백이 나를 에워쌀 뿐이었다. 밤은 아직 끝나지 않았다. 해가 뜨려면 아직 멀었다. 나는 고개를 들었다. 외부 스크린 너머에서 붉은 눈 몇 개가 아직도 도시를 따라붙고 있었다.</p>
+<p>그때, 꺼져 있던 지휘 패널 하나가 푸르게 점멸했다.</p>
+<p>지휘권이 넘어오면서 이전에는 볼 수 없던 메뉴가 자동으로 열리고 있었다.</p>
+<div class="blank"></div>
+<p>지휘권 인계 완료.</p>
+<p>열람 권한: 지휘관 이상.</p>
+<p>잠겨 있던 기록 목록이 화면 위로 펼쳐졌다.</p>
+<p>나는 가장 위의 이름에서 시선을 멈췄다.</p>
+<p>사흘 전 사망 처리된 아이였다.</p>
+<div class="blank"></div>
+<div class="blank"></div>
+            </div>
+            <nav class="chapter-nav">
+                <button class="nav-btn" data-step="-1">← 이전 화</button>
+                <button class="nav-btn" data-toc>목차</button>
+                <button class="nav-btn" data-step="1">다음 화 →</button>
+            </nav>
+        </article>
+        <article class="chapter" data-index="3" hidden>
+            <header class="chapter-head">
+                <div class="chapter-num">4화</div>
+                <h2>결정타를 넣지 않는 로봇</h2>
+            </header>
+            <div class="chapter-body">
+<p>지휘권이 인계되자 패널 위로 도시의 모든 비상 상황이 쏟아졌다. 화면 가장 위에는 사흘 전 사망 처리된 아이의 이름이 선명하게 떠 있었다. 루와 같은 공동양육구역 출신. 나는 그 이름에서 억지로 시선을 떼었다. 지금은 다른 것을 봐야 했다.</p>
+<div class="blank"></div>
+<p>후미 방어선의 경고 표시가 빠르게 붉어지고 있었다. 모듈 하나를 버려 속도를 회복했지만 놈들의 추격은 끝나지 않았다. 이대로라면 다음 공세가 오기 전에 후미 방어선이 먼저 무너진다.</p>
+<p>화면 한쪽에 오래된 비상 설비 하나가 점멸했다.</p>
+<div class="blank"></div>
+<p>[후미 유도 송신기 - 연결 끊김]</p>
+<div class="blank"></div>
+<p>위치는 폐공장 지하.</p>
+<p>폐공장은 후미에 매달린 구형 생산 모듈이었다. 필요하면 도시 본체에서 분리할 수 있도록 설계된 곳.</p>
+<p>대징집 이전에 쓰이던 시설이었다. 가동할 수만 있다면 도시의 이동 신호를 흉내 내 놈들의 일부를 다른 방향으로 끌어낼 수 있었다. 문제는 수년 전 폐쇄된 뒤 아무도 제대로 손대지 않았다는 것이었다.</p>
+<div class="blank"></div>
+<p>“유도 송신기 아직 살아 있습니까?”</p>
+<p>통신병이 고개를 저었다.</p>
+<div class="blank"></div>
+<p>“원격 접속 불가입니다. 직접 가서 재가동해야 합니다.”</p>
+<p>밖에서는 또다시 금속성 충격음이 울렸다. 고민할 시간은 없었다.</p>
+<div class="blank"></div>
+<p>“전원 후퇴. 엔진 정비구역 통과해서 폐공장으로.”</p>
+<p>내 목소리는 바렉의 그것만큼 낮고 단호하지 못했다. 하지만 팀원들은 망설이지 않았다.</p>
+<div class="blank"></div>
+<p>“젠장, 또 터진 거야?” 카일이 외벽을 확인하며 중얼거렸다. 그의 얼굴은 기름과 먼지로 얼룩져 있었다.</p>
+<div class="blank"></div>
+<p>“어디로요? 폐공장은 위험한데요!” 노아가 겁먹은 목소리로 물었다. 폐공장. 고철 더미와 녹슨 기계가 가득한 그곳은 로봇의 매복에 최적화된 곳이었다.</p>
+<div class="blank"></div>
+<p>“정면에서 밀어붙이는 놈들을 상대하는 것보단 나아.” 미라가 노아의 질문에 대신 답했다. 그녀는 부상자들을 챙기며 가장 먼저 대피로를 확인했다.</p>
+<div class="blank"></div>
+<p>“통로 확보. 폐공장 입구까지.”</p>
+<div class="blank"></div>
+<p>“알겠습니다.” 에런은 노아의 등을 밀며 전방으로 뛰쳐나갔다. 그는 동생을 지키려는 듯 바짝 긴장한 얼굴이었다.</p>
+<div class="blank"></div>
+<p>엔진 정비구역을 통과하는 내내 비명과 굉음이 이어졌다. 도시의 금속 구조물이 비명을 지르며 찢겨 나갔다. 좁은 통로에 기름 냄새와 먼지가 자욱했다. 뜨거운 열기가 피부를 태울 듯했다. 우리는 놈들의 추격에서 벗어나려 필사적으로 달렸다.</p>
+<div class="blank"></div>
+<p>폐공장 입구는 거대한 금속 문이 절반쯤 열린 채 우리를 기다리고 있었다. 안쪽은 빛 하나 없는 어둠이었다.</p>
+<div class="blank"></div>
+<p>“여기서 매복할 거야?” 카일이 숨을 헐떡이며 물었다.</p>
+<div class="blank"></div>
+<p>나는 고개를 저었다.</p>
+<div class="blank"></div>
+<p>“아니. 송신기를 살린다.”</p>
+<div class="blank"></div>
+<p>카일이 폐공장 안쪽을 바라봤다.</p>
+<div class="blank"></div>
+<p>“그 고물 아직도 돌아가?”</p>
+<div class="blank"></div>
+<p>“돌아가게 만들어야지.”</p>
+<div class="blank"></div>
+<p>노아가 어둠 속을 바라보며 침을 삼켰다.</p>
+<div class="blank"></div>
+<p>“그걸 켜면 놈들이 진짜 다른 데로 가요?”</p>
+<div class="blank"></div>
+<p>“도시하고 비슷한 이동 신호를 뿌려.” 내가 말했다. “전부는 아니어도 일부는 떨어뜨릴 수 있어.”</p>
+<div class="blank"></div>
+<p>미라가 내부 지도를 확인했다.</p>
+<div class="blank"></div>
+<p>“송신기는 폐공장 중앙 제어실. 거기서 후미수비대 통신망이 연결된 비상 출구까지 이어져 있어. 재가동하고 그대로 빠져나가면 돼.”</p>
+<div class="blank"></div>
+<p>말은 간단했다.문제는 그 길 전체가 이미 놈들의 영역이 되어 있다는 것이었다.</p>
+<div class="blank"></div>
+<p>“안쪽 조명은 꺼져 있어. 야간 시야 모드 켜.”</p>
+<div class="blank"></div>
+<p>나는 헬멧의 야간 시야 모드를 작동시켰다. 녹색의 희미한 빛이 눈앞을 채웠다.</p>
+<div class="blank"></div>
+<p>“카일, 송신기 담당. 에런, 노아 엄호. 미라, 후미. 신호만 켜지면 싸우지 말고 바로 빠진다.”</p>
+<div class="blank"></div>
+<p>“알겠습니다.”</p>
+<div class="blank"></div>
+<p>카일은 이어폰을 두 번 두드린 뒤 앞장섰다. 그가 몸을 숙여 좁은 틈으로 들어섰다. 놈들의 금속 발소리는 아직 멀리서 들렸지만, 곧 이곳으로 몰려올 것이 분명했다.</p>
+<div class="blank"></div>
+<p>고철 더미로 가득한 공장은 미로 같았다. 삐걱거리는 철골, 부서진 기계 잔해, 바닥을 기는 기름때. 폐허의 악취가 코를 찔렀다. 발밑은 미끄러웠고, 걸을 때마다 쨍그랑거리는 금속음이 울렸다. 야간 시야 모드로는 모든 것을 볼 수 없었다. 그림자 뒤에 숨은 로봇들이 우리를 노리고 있을지도 몰랐다.</p>
+<div class="blank"></div>
+<p>“대장! 왼쪽에서 신호!” 노아의 목소리가 통신망에 울렸다. 겁에 질린 목소리였지만 빨랐다.</p>
+<div class="blank"></div>
+<p>“에런, 처리해.”</p>
+<div class="blank"></div>
+<p>에런이 놈들을 향해 총을 쏘았다. 기관총 소리가 좁은 공장을 뒤흔들었다. 곧 금속이 찢겨나가는 소리가 들렸다.</p>
+<div class="blank"></div>
+<p>“확실히 처리했어?” 카일이 물었다.</p>
+<div class="blank"></div>
+<p>“움직임 없어.” 에런이 대답했다.</p>
+<div class="blank"></div>
+<p>폐공장 중앙에 가까워지자 야간 시야 너머로 거대한 철제 기둥 하나가 모습을 드러냈다. 녹슨 배관과 케이블 사이에 파묻힌 채였지만, 기둥 중앙에는 희미한 파란 표시등이 살아 있었다.유도 송신기였다.</p>
+<div class="blank"></div>
+<p>“살아 있네.”</p>
+<div class="blank"></div>
+<p>카일이 처음으로 반가운 목소리를 냈다.그는 덮개를 뜯어내고 내부 배선을 확인했다. 몇 가닥은 끊어져 있었고 전원부는 거의 타버린 상태였다.</p>
+<div class="blank"></div>
+<p>“원격 연결이 안 된 이유를 알겠네. 전원선 나갔어.”</p>
+<div class="blank"></div>
+<p>“고칠 수 있어?”</p>
+<div class="blank"></div>
+<p>“나를 누구로 보고.”</p>
+<div class="blank"></div>
+<p>카일이 손을 집어넣었다가 곧 얼굴을 찌푸렸다.</p>
+<div class="blank"></div>
+<p>“근데 시간 좀 필요해.”</p>
+<div class="blank"></div>
+<p>뒤쪽에서 금속 발소리가 울렸다.시간은 없었다.</p>
+<div class="blank"></div>
+<p>“얼마나.”</p>
+<div class="blank"></div>
+<p>“잘하면 삼 분.”</p>
+<div class="blank"></div>
+<p>삼 분.지금 상황에서는 지나치게 길었다.</p>
+<div class="blank"></div>
+<p>“해.”</p>
+<div class="blank"></div>
+<p>나는 뒤를 돌아봤다.</p>
+<div class="blank"></div>
+<p>“우리가 막는다.”</p>
+<div class="blank"></div>
+<p>송신기 반대편으로 출구를 찾던 에런의 목소리가 터져 나왔다.</p>
+<p>“대장! 비상 출구 쪽 길이 막혔습니다. 엔진 블록이 통로를 완전히 막고 있어요!”</p>
+<div class="blank"></div>
+<p>길은 끊겼고, 놈들은 계속 밀려왔다. 뒤에서는 미라의 총성이 연달아 들렸다.</p>
+<div class="blank"></div>
+<p>“후미에 두 개체! 점점 가까워져!”</p>
+<div class="blank"></div>
+<p>나는 주저 없이 외쳤다. “에런! 엔진 블록 위에 노아 올려보내. 먼저 통로 확인해.”</p>
+<div class="blank"></div>
+<p>“알겠습니다.” 에런은 노아의 허리를 받쳐 엔진 블록 위로 올려보냈다. 노아는 작은 몸으로 블록 위로 기어 올라갔다.</p>
+<div class="blank"></div>
+<p>“대장! 여기… 여기도 막혔어!” 노아의 목소리가 절망적으로 울렸다. “어떻게… 젠장, 이제 갇혔어요!”</p>
+<div class="blank"></div>
+<p>그 순간 뒤쪽에서 카일이 외쳤다.</p>
+<div class="blank"></div>
+<p>“됐다!”</p>
+<div class="blank"></div>
+<p>낡은 공장 전체가 낮게 울렸다.꺼져 있던 송신기 기둥을 따라 파란 불빛이 하나씩 켜졌다. 곧 귀로는 들을 수 없는 진동이 바닥을 타고 퍼졌다.</p>
+<div class="blank"></div>
+<p>“신호 송출 시작! 도시 이동 패턴 복제 중!”</p>
+<div class="blank"></div>
+<p>통신망 너머에서 후미수비대의 목소리가 들어왔다.</p>
+<div class="blank"></div>
+<p>“적 신호 분산 확인! 후미 추격 개체 일부 이탈합니다!”</p>
+<div class="blank"></div>
+<p>성공이었다.적어도 도시는 당장 다음 공세를 피할 수 있었다.</p>
+<div class="blank"></div>
+<p>문제는 우리가 아직 폐공장 안에 있다는 것이었다.송신기가 켜진 순간, 공장 곳곳에 흩어져 있던 놈들이 일제히 중앙 제어실을 향해 방향을 틀었다. 문제는 우리가 바로 그 송신기 앞에 서 있다는 것이었다. 붉은 눈들이 사방에서 몰려들었다.</p>
+<div class="blank"></div>
+<p>사방이 막혔다.</p>
+<div class="blank"></div>
+<p>놈들의 붉은 눈이 사방에서 우리를 향해 번뜩였다. 날카로운 금속 발톱이 고철 바닥을 긁으며 다가왔다. 기름과 달아오른 금속 냄새가 공기 속에 짙게 번졌다. 거대한 몸체에서 뿜어져 나오는 열기는 폐공장의 공기를 더욱 뜨겁게 만들었다. 놈들은 우리를 완벽하게 포위했다.</p>
+<div class="blank"></div>
+<p>“젠장…!” 카일이 이를 악물었다. 그의 총열이 뜨겁게 달아올라 있었다.</p>
+<div class="blank"></div>
+<p>미라의 총성이 잦아들었다.</p>
+<div class="blank"></div>
+<p>“탄약 부족해. 여섯 발 남았어.”</p>
+<div class="blank"></div>
+<p>에런은 노아를 품에 안고 있었다. 그의 몸이 미세하게 떨리고 있었다.</p>
+<div class="blank"></div>
+<p>“사격 중지.” 내가 명령했다.</p>
+<div class="blank"></div>
+<p>놈들은 총격을 멈춘 우리에게 서서히 다가왔다. 이제 로봇과 우리의 거리는 고작 몇 미터에 불과했고 거대한 로봇 하나가 내 앞에 섰다. 놈의 붉은 눈은 내 얼굴을 향해 빛을 쏘았다. 기계음이 낮게 울렸다. 놈의 거대한 금속 팔이 내 어깨를 붙잡았다. 다음 순간 몸이 바닥으로 내리꽂혔다. 숨을 들이마실 틈도 없이 놈의 발이 내 가슴을 짓눌렀다. 차가운 금속의 무게가 나를 짓누르자 숨쉬기조차 힘들었다. 헬멧의 시야가 흔들렸다.</p>
+<div class="blank"></div>
+<p>그때였다. 놈의 움직임이 멈췄다.</p>
+<div class="blank"></div>
+<p>거대한 로봇은 나를 완벽하게 제압한 채 멈춰 섰다. 놈의 붉은 눈이 내 얼굴에서 목, 가슴, 다시 얼굴로 움직였다.무언가를 확인하는 것처럼.낮게 이어지던 기계음이 갑자기 끊겼다. 내 가슴을 짓누르던 발에도 더 이상 힘이 들어오지 않았다.죽일 수 있었다.그런데 죽이지 않았다.공장 전체가 일순간 정지한 듯 조용해졌다. 죽음 직전의 정적. 로봇의 센서가 내 눈동자를 훑는 것이 느껴졌다.</p>
+<div class="blank"></div>
+<p>“대장!” 카일의 다급한 목소리가 들렸다. “놈들 움직임이… 잠깐 멈췄어!”</p>
+<div class="blank"></div>
+<p>나는 그 순간을 놓치지 않았다. 로봇의 발이 잠시 삐걱거리는 틈을 타 몸을 비틀었다. 놈의 다리 옆에 부서진 송풍관이 보였다. 나는 그 송풍관을 향해 발로 걷어찼다. 놈의 다리가 휘청거렸다.</p>
+<div class="blank"></div>
+<p>“지금이야! 놈들 움직임이 둔해!” 내가 외쳤다.</p>
+<div class="blank"></div>
+<p>에런의 총성이 먼저 터졌다. 미라도 남은 탄약으로 놈들의 관절을 노렸다. 카일은 송신기에서 뜯어낸 전원 장치를 놈의 센서 쪽으로 집어던졌다. 파란 불꽃이 튀며 놈의 시야가 흔들렸다. 놈들의 움직임이 다시 빨라지기 전에, 우리는 그 틈을 비집고 나갔다.</p>
+<div class="blank"></div>
+<p>“가자! 비상 출구까지!”</p>
+<div class="blank"></div>
+<p>우리는 다시 달렸다. 놈들의 금속 발소리가 뒤를 쫓았다. 놈들은 포기하지 않았다. 하지만 방금 전의 정지가 우리의 탈출 기회를 만들었다. 우리는 폐공장 끝에 있는 비상 출구를 향해 전력 질주했다.</p>
+<div class="blank"></div>
+<p>“열어! 문 열어!” 카일이 소리쳤다.</p>
+<div class="blank"></div>
+<p>비상 출구 문은 굳게 닫혀 있었다. 그 옆에 달린 제어 패널이 깜빡였다.</p>
+<div class="blank"></div>
+<p>“수동 개방이야! 카일, 네가 해!”</p>
+<div class="blank"></div>
+<p>카일은 망설이지 않고 패널에 매달렸다. 그의 손가락이 빠르게 버튼을 눌렀다. 놈들의 그림자가 점점 가까워졌다.</p>
+<div class="blank"></div>
+<p>“좀 더 빨리! 젠장!” 에런이 뒤를 보며 외쳤다.</p>
+<div class="blank"></div>
+<p>쾅!</p>
+<div class="blank"></div>
+<p>문이 열리는 순간, 마지막 로봇이 우리를 향해 몸을 던졌다. 나는 놈의 공격을 피하며 문 안으로 몸을 던졌다. 뒤따라 들어오는 카일, 미라, 에런, 노아. 놈들의 붉은 눈이 문틈으로 우리를 노렸다.</p>
+<div class="blank"></div>
+<p>“닫아! 빨리 닫아!”</p>
+<div class="blank"></div>
+<p>카일이 제어 패널을 두드리자 문이 다시 닫히기 시작했다. 놈들의 금속 팔이 닫히는 문틈으로 들어오려 애썼다. 쾅! 나는 문에 끼인 놈의 팔을 향해 사격했다. 금속 파편이 튀었다.</p>
+<div class="blank"></div>
+<p>문이 완전히 닫혔다.</p>
+<p>숨을 헐떡였다. 놈들의 기계음은 더 이상 들리지 않았다. 우리는 겨우 살아남았다.</p>
+<p>하지만 내 마음속에는 설명되지 않는 찜찜함이 남아 있었다. 놈들의 정지. 마치 우리를 확인하는 듯한 그 시선.</p>
+<div class="blank"></div>
+<p>카일이 땀으로 범벅된 얼굴로 나를 바라봤다. “젠장, 아까 그 놈들 왜 멈췄냐? 센서 오류인가?”</p>
+<div class="blank"></div>
+<p>“모르겠다.” 나는 고개를 저었다.</p>
+<div class="blank"></div>
+<p>나는 아까 나를 짓눌렀던 로봇을 떠올렸다. 폐공장 깊숙한 곳에 버려졌을 그놈.</p>
+<p>놈의 센서는 정말 오류였을까.</p>
+<div class="blank"></div>
+<p>우리가 비상 출구를 통과한 직후 폐공장 모듈의 연결부가 해제됐다. 묵직한 충격과 함께 오래된 공장이 솔라의 후미에서 천천히 떨어져 나갔다.</p>
+<div class="blank"></div>
+<p>그 순간, 무전기가 울렸다.</p>
+<div class="blank"></div>
+<p>“유도 신호 정상 작동 중. 추격 개체 절반 이상이 송신기 쪽으로 이탈했다. 도시와의 거리는 계속 벌어지고 있다.”</p>
+<div class="blank"></div>
+<p>나는 그제야 숨을 길게 내쉬었다.우리가 폐공장까지 들어온 의미는 있었다.도시는 살아남았다.적어도 오늘 밤은.</p>
+<div class="blank"></div>
+<p>우리는 비상 출구를 통해 도시의 안전한 구역으로 돌아왔다. 폐공장의 악취와 금속 소리는 사라지고, 익숙한 엔진의 진동과 사람들의 웅성거림이 우리를 맞았다. 우리는 모두 땀과 먼지로 뒤덮여 있었다. 루가 대피구역에서 달려 나왔다. 미라는 아이를 품에 세게 끌어안았다. 한동안 놓지 못한 채 작은 몸을 떨었다. 에런은 노아의 헬멧을 벗겨주며 머리를 쓰다듬었다.</p>
+<div class="blank"></div>
+<p>나는 카일의 어깨를 툭 쳤다. “수고했다.”</p>
+<div class="blank"></div>
+<p>“네가 더. 새 대장.”</p>
+<div class="blank"></div>
+<p>카일이 웃었다.</p>
+<p>나는 웃지 못했다.</p>
+<p>닫히기 직전의 비상 출구 너머에서, 분명 꺼졌던 붉은 센서가 다시 켜지던 순간이 머릿속에서 떠나지 않았다.</p>
+<p>놈은 나를 죽일 수 있었다.</p>
+<p>그런데 왜 죽이지 않았을까.</p>
+            </div>
+            <nav class="chapter-nav">
+                <button class="nav-btn" data-step="-1">← 이전 화</button>
+                <button class="nav-btn" data-toc>목차</button>
+                <button class="nav-btn" data-step="1">다음 화 →</button>
+            </nav>
+        </article>
+        <article class="chapter" data-index="4" hidden>
+            <header class="chapter-head">
+                <div class="chapter-num">5화</div>
+                <h2>정오</h2>
+            </header>
+            <div class="chapter-body">
+<div class="blank"></div>
+<p>내 머릿속의 질문은 해가 완전히 떠올라 도시 전체에 낮의 온기가 스며들 때까지 사라지지 않았다.</p>
+<div class="blank"></div>
+<p>멀리서 들리던 주 추진기관의 둔탁한 소리가 서서히 잦아들었다. 도시는 밤과의 거리를 충분히 벌렸다. 하늘은 푸르게 열렸고, 태양은 차벽 너머로 쨍하게 쏟아져 들어왔다. 사람들은 환호성을 질렀다. 정오였다.</p>
+<div class="blank"></div>
+<p>주 추진기관 세 개 중 하나가 멈추고 보조 동력으로 전환되는 소리가 들렸다. 진동은 느려졌고, 뜨거운 금속 냄새는 싱그러운 흙먼지 냄새로 바뀌었다. 수비대원들은 지친 몸으로 각자의 구역을 떠났다. 며칠 만에 도시가 처음으로 살아있는 마을처럼 보였다.</p>
+<div class="blank"></div>
+<p>우리는 가장 먼저 씻었다. 기름때와 먼지, 땀으로 범벅된 몸을 차가운 물줄기로 헹궜다. 비릿한 피 냄새와 화약 냄새가 물에 씻겨 내려갔다. 피부가 붉게 달아올랐지만, 차가운 물은 기분 좋았다. 낡은 방호복을 벗자 팔과 손에 새겨진 흉터들이 선명하게 드러났다. 서로의 얼굴만큼이나 낯익은 흉터 앞에서우린 서로 놀리며 웃었다.</p>
+<div class="blank"></div>
+<p>씻고 나오자 배급소 앞에 길게 줄이 늘어서 있었다. 평소보다 넉넉한 배급이었다. 짭짤한 고기와 미지근한 술. 우리는 낡은 탄약 상자를 탁자 삼아 둘러앉았다. 따뜻한 죽 한 그릇은 모든 감각을 이곳으로 끌어당겼다. 노아의 볼멘소리, 카일의 웃음, 에런의 욕설, 미라가 작은 용기의 뚜껑을 닫는 소리가 들렸다.</p>
+<div class="blank"></div>
+<p>“이거 진짜 고기 맞아?” 노아가 젓가락으로 고기 조각을 휘저었다. “고기라고 해놓고 이상한 거 넣는 거 아니지? 저번에도 그랬잖아!”</p>
+<div class="blank"></div>
+<p>“징징거리지 마. 그냥 먹어.” 에런이 노아의 머리를 툭 쳤다. 그의 얼굴에도 피곤한 기색이 역력했다.</p>
+<div class="blank"></div>
+<p>“야, 그래도 고기가 어디야. 옛날에는 이것보다 더 좋은 것도 나왔다는데.” 카일이 침을 꿀꺽 삼키며 말했다. 그는 가장 맛있는 조각을 골라냈다가 멈칫하더니 한숨을 쉬며 결국 노아의 그릇에 얹어주었다.</p>
+<div class="blank"></div>
+<p>“옛날에는 말이야, 사인 대장이 로봇 열 마리를 혼자 잡아서 마을 잔칫상을 차렸대. 그때는 진짜 고기만 나왔다고.”</p>
+<div class="blank"></div>
+<p>“사인 대장이 또?” 미라가 입술을 안으로 깨물며 웃었다. “카일, 사인 대장이 로봇 열 마리 잡았다는 소리는 어디서 들은 거야? 내가 듣기론 밤에 남았다가 아침에 걸어 나왔다고만 했는데.”</p>
+<div class="blank"></div>
+<p>“야, 그게 그거지! 밤에 남아서 열 마리를 잡았으니까 걸어 나온 거 아니겠냐?” 카일이 붉은 절연천 손목끈을 만지작거리며 말했다.</p>
+<div class="blank"></div>
+<p>“그리고 내가 듣기론 사인 대장 키가 에런보다 훨씬 컸다고! 최소 190은 됐을 거야. 그 정도는 되어야 혼자 로봇을 열 마리 잡지.”</p>
+<div class="blank"></div>
+<p>“사인 대장은 오히려 작고 단단한 체격에 키는 나보다 작았다고 들었는데?” 미라가 놀리듯이 대꾸했다.</p>
+<div class="blank"></div>
+<p>“그리고 사인 대장이 누구인지, 어느 도시 소속인지도 다 말이 다르잖아. 심지어 스무 살이 넘었을 거라는 말까지 있던데.”</p>
+<div class="blank"></div>
+<p>“젠장, 사인 대장이 어디 소속이었냐? 바렉 대장하고 친구였다는 말도 있고… 아, 맞다! 사인 대장은 원래 통신 전문이라 정식 명칭을 좋아했다고!”</p>
+<p>카일이 통신 상태가 나쁠 때처럼 이어폰을 두 번 두드리는 시늉을 했다.</p>
+<p>“`후미 기동 방어 통제관` 이랬나?”</p>
+<div class="blank"></div>
+<p>“야, 그건 우리 도시의 오래된 지휘관 이름이야.” 에런이 어이없다는 듯 말했다.</p>
+<div class="blank"></div>
+<p>우리는 웃었다. 짧은 웃음. 놈들은 이런 걸 알까. 죽음 바로 옆에서조차 내일 먹을 고기 한 조각을 걱정하고, 돌아가 기다리는 사람의 몫을 챙기고, 별것 아닌 농담으로 웃는 것. 우리는 살아남았다.</p>
+<div class="blank"></div>
+<p>정오의 활기 속에 아이들의 웃음소리가 울려 퍼졌다. 하지만 예전만큼은 많지 않았다. 옆자리에 앉은 노인이 습관적으로 죽 그릇 하나를 더 놓으려다 멈췄다. 얼마 전 사라진 아이의 몫이었다. 그는 아무 말 없이 그릇을 다시 거두었다. 미라는 루에게서 눈을 떼지 못했다. 미라의 불안이 눈빛에서 번졌다.</p>
+<div class="blank"></div>
+<p>나는 남은 죽을 천천히 삼켰다. 뭘 더 해. 오늘 같은 날 계속되면 됐지.</p>
+<div class="blank"></div>
+<p>따뜻한 죽이 뱃속으로 들어갔지만, 이 평화는 오래가지 않을 거란 예감이 등줄기를 타고 기어 올랐다. 차가운 금속의 무게가 다시 나를 짓누를 것만 같았다. 놈들의 붉은 눈이 내 얼굴을 향해 빛을 쏘고 기계음이 낮게 울리던 순간이 떠올랐다.</p>
+<div class="blank"></div>
+<p>콰아앙!</p>
+<div class="blank"></div>
+<p>그때였다. 갑작스러운 진동이 도시 전체를 뒤흔들었다. 우리는 모두 자리에서 튕겨져 나갈 뻔했다. 배급 그릇이 바닥에 나뒹굴고 고기와 죽이 뒤섞였다. 사람들의 얼굴에서 웃음기가 사라졌다.</p>
+<div class="blank"></div>
+<p>지휘 구역에서 비상 경고음이 울려 퍼졌다. 붉은 불빛이 천장을 따라 빠르게 점멸했다.</p>
+<div class="blank"></div>
+<p>“주 추진기관 3번 정지. 현재 속도 유지 시 일몰 경계까지 71시간.”</p>
+<div class="blank"></div>
+<p>무전병의 다급한 목소리가 이어폰을 통해 흘러나왔다. 도시는 다시 멈춰 섰다. 정오의 평화는 끝났다. 놈들이 다시 몰려올 터였다.</p>
+<div class="blank"></div>
+<p>나는 테이블을 뒤엎고 벌떡 일어났다. 지휘 구역에서 달려온 무전병이 내게 다가왔다. 그의 얼굴은 새하얗게 질려 있었다.</p>
+<p>“대장님, 3번 주 추진기관에 문제가 생겼습니다. 동력원 불명, 작동 정지입니다.”</p>
+<p>나는 왼손 엄지와 검지 사이의 흉터를 꾹 눌렀다. 머릿속이 빠르게 계산을 시작했다. 3번 추진기관은 도시의 균형을 담당하는 핵심이었다.</p>
+<p>“수리팀은?” 내가 물었다.</p>
+<p>“아직 현장 진입도 못했습니다. 외부 압력 센서가 계속 이상 반응을 보이고 있습니다.” 무전병이 보고했다.</p>
+<p>“젠장, 외부 압력?” 카일이 옆에서 중얼거렸다. “그럼 그 새끼들 또 나타났다는 거야?”</p>
+<p>미라는 품에 안고 있던 루를 힘껏 안았다. 아이는 불안한 눈으로 나를 올려다보았다. 에런은 노아의 앞을 막아서며 주위를 경계했다.</p>
+<p>“비상 출동 준비해. 수리팀을 지원한다.” 내가 짧게 명령했다. “카일, 미라, 에런, 노아. 서둘러.”</p>
+<p>“나도 가고 싶어!” 노아가 소리쳤다. 그의 목소리에는 두려움과 함께 허세가 섞여 있었다.</p>
+<p>“닥쳐, 노아.” 에런이 동생을 짧게 다그쳤다. 그의 손은 이미 총을 움켜쥐고 있었다.</p>
+<p>“루, 나 다녀올게.” 미라가 아이의 뺨에 입을 맞췄다. “두 시간 안에 올 거야.” 그녀는 습관처럼 손가락으로 시간을 약속했다. 루는 고개를 끄덕이며 그녀의 낡은 외투 자락을 놓았다.</p>
+<div class="blank"></div>
+<p>우리는 방호복을 다시 껴입었다. 땀으로 축축했지만 신경 쓸 틈이 없었다. 헬멧을 쓰고, 장비를 점검하고, 무기를 챙겼다. 도시의 엔진 소리가 멈춘 자리에 비상등의 붉은 점멸만이 가득했다. 발아래 진동은 거의 느껴지지 않았다. 죽어가는 도시처럼 느껴졌다.</p>
+<div class="blank"></div>
+<p>비상 출구를 통해 나서는 순간, 차가운 금속 냄새와 함께 불안한 정적이 우리를 감쌌다. 폐공장의 잔해가 검은 그림자를 드리우고 있었다. 놈들의 서식지였다.</p>
+<p>“이번엔 몇 마리일까.” 카일이 총을 고쳐 쥐었다. 그의 입꼬리가 살짝 올라갔지만, 눈에는 농담기 없는 긴장이 어려 있었다.</p>
+<p>“전방에 비정상적인 열원 반응. 세 개체 확인.” 에런이 보고했다. “추진기관 방향으로 이동 중입니다.”</p>
+<p>놈들은 이미 추진기관에 접근하고 있었다. 주 동력이 멈춘 틈을 노린 것이 분명했다. 나는 판단할 때 습관처럼 왼손 엄지와 검지 사이의 흉터를 눌렀다.</p>
+<p>“미라, 노아는 후방에서 대기. 카일, 에런은 나와 함께 선두.” 내가 명령했다. “빠르게 이동한다.”</p>
+<p>우리는 잔해 더미와 쓰러진 고층 건물 사이를 조심스럽게 움직였다. 잿빛 먼지가 발아래서 피어올랐다. 폐허가 된 도시의 풍경은 언제나 음울했다. 파괴된 구조물과 부식된 금속들이 과거의 영광을 비웃는 듯했다.</p>
+<p>“젠장, 여기 냄새도 역겹고.” 카일이 투덜거렸다. “진짜 옛날엔 여기 푸른 잔디밭이었다는데. 거짓말 같지 않냐?”</p>
+<p>“카일, 집중해.” 에런이 낮게 경고했다.</p>
+<p>그때였다. 폐공장의 거대한 환기구 너머에서 기계음이 들렸다. 익숙한, 하지만 소름 끼치는 소리. 놈들이었다.</p>
+<p>세 개의 개체는 예상보다 거대했다. 표면에는 날카로운 금속 조각들이 돋아나 있었고, 붉은 센서 눈이 어둠 속에서 섬뜩하게 빛나고 있었다. 놈들은 멈춰선 추진기관의 외벽을 긁어대고 있었다. 놈들의 발톱이 날카로운 소리를 내며 금속을 파고들었다.</p>
+<p>“사격 준비. 내 신호에 맞춰 발사한다.” 내가 속삭였다.</p>
+<p>놈들은 우리의 존재를 눈치채지 못한 듯했다. 오직 추진기관을 파괴하는 데만 몰두하고 있었다. 나는 조준경 너머로 놈들의 움직임을 살폈다. 가장 큰 개체가 추진기관의 연료관으로 보이는 부분을 집중적으로 공격하고 있었다.</p>
+<p>“발사!”</p>
+<p>나의 신호와 동시에 에런과 카일의 총구에서 불을 뿜었다. 놈들의 표면에서 스파크가 튀었다. 그러나 놈들은 쉽게 쓰러지지 않았다. 오히려 공격받자마자 우리 쪽으로 고개를 돌렸다. 붉은 센서가 우리를 향해 번뜩였다.</p>
+<p>“산개! 엄폐!”</p>
+<p>우리는 흩어지며 가장 가까운 잔해 뒤로 몸을 숨겼다. 놈들의 반격이 시작되었다. 날카로운 파편들이 사방으로 튀었다. 금속 구조물이 찢겨나가는 소리가 귀청을 찢는 듯했다.</p>
+<p>“망할, 저번보다 더 단단한 것 같은데!” 카일이 욕설을 내뱉었다. 그는 붉은 절연천 손목끈을 세게 움켜쥐고 있었다.</p>
+<p>“노아, 거기서 움직이지 마.” 에런의 목소리에 초조함이 섞였다. 그는 총을 쏘면서도 노아의 위치를 계속 확인했다.</p>
+<p>미라는 잔해 뒤에서 상황을 살폈다. 그녀는 주머니에서 붕대를 꺼내 숫자를 세는 듯했다. 응급 상황에 대비하는 그녀의 버릇이었다.</p>
+<p>나는 몸을 숙여 다른 엄폐물로 이동했다. 놈들의 시선을 분산시킬 필요가 있었다. 하나를 집중적으로 노렸다. 놈의 다리 부분을 겨냥해 연사했다. 놈의 몸체가 휘청거렸다. 다른 두 개체가 나를 향해 돌진하기 시작했다.</p>
+<p>“카일, 오른쪽에 하나! 에런, 왼쪽!”</p>
+<p>두 개체가 나를 덮치기 직전, 카일의 기관총이 불을 뿜었고 에런의 정확한 사격이 놈들의 움직임을 방해했다. 나는 간신히 몸을 피했다. 내가 더 잘 아니까, 내가 결정해야 했다. 그리고 내가 위험을 대신 떠안아야 했다.</p>
+<p>놈들의 금속 팔이 내 코앞을 스쳐 지나갔다. 차가운 금속 냄새가 코를 찔렀다. 놈의 붉은 센서가 내 눈을 향해 번뜩였다. 섬뜩한 시선이었다. 저번과 같은 감각. 놈은 날 죽일 수 있었다. 하지만 그러지 않았다. 왜?</p>
+<p>그 질문이 다시 머릿속을 맴돌았다. 망설일 틈은 없었다. 추진기관은 계속 공격받고 있었다.</p>
+<p>“놈들이 추진기관의 동력 연결부를 노린다! 집중 사격!”</p>
+<p>우리는 놈들을 향해 총탄을 쏟아부었다. 마침내 가장 큰 개체가 비명을 지르며 쓰러졌다. 이어서 다른 두 개체도 쓰러졌다.</p>
+<p>전투는 끝났지만, 추진기관의 상태는 좋지 않았다. 연료관 일부가 파손되어 연기가 피어오르고 있었다.</p>
+<p>“미라, 노아, 괜찮아?” 내가 물었다.</p>
+<p>“네.” 미라의 목소리는 차분했다. 노아는 눈을 자주 깜빡이면서도 괜찮은 척 고개를 끄덕였다.</p>
+<p>우리는 추진기관에 다가갔다. 거대한 금속 외벽에는 놈들이 남긴 깊은 긁힌 자국들이 선명했다. 손상 부위를 살피던 중, 노아가 바닥에 웅크리고 앉아 있었다.</p>
+<p>“노아, 뭐 해?” 에런이 동생에게 다가갔다.</p>
+<p>“이거… 그림인데.” 노아가 손가락으로 금속 패널을 가리켰다. 패널에는 알 수 없는 기호와 그림이 새겨져 있었다. 놈들이 파괴한 흔적 속에서 발견된 것이었다. 어딘가 익숙한 문양. 그는 주머니에서 작은 수첩을 꺼내 빠르게 베껴 그렸다.</p>
+<p>“젠장, 지금 그림 그릴 때야? 이거 봐, 연결부 전체가 엉망이야!” 카일이 탄식했다. 그는 붉은 절연천 손목끈을 만지작거리며 파손된 연료관을 살폈다. “이거 수리팀이 와도 시간 좀 걸리겠는데?”</p>
+<p>“시간이 없어.” 내가 말했다. “도시가 멈추면 전부 끝장이야.”</p>
+<p>나는 노아가 그린 그림을 들여다보았다. 복잡한 기호와 패턴. 그리고 그 그림 사이에서, 나는 희미하게 불에 그슬린 흔적을 발견했다. 내 왼손 엄지와 검지 사이의 흉터와 비슷한 모양이었다.</p>
+<p>“이걸 봐.” 내가 그림을 카일에게 내밀었다. “이 흔적, 놈들이 일부러 새긴 것 같지 않아?”</p>
+<p>카일은 눈썹을 찌푸리며 그림을 살폈다. “일부러? 무슨 소리야, 대장. 그냥 파괴하다 생긴 자국 아냐?”</p>
+<p>“아니.” 나는 확신했다. “놈들은 도시를 파괴하려 하면서 동시에 어떤 메시지를 남기는 것 같아.”</p>
+<p>미라는 추진기관의 손상 부위를 확인하며 말했다. “이대로는 도시의 균형을 잡을 수 없어. 일시적으로라도 연결부를 복구해야 해.”</p>
+<p>“하지만 저걸 어떻게 복구해?” 에런이 절망적으로 말했다. “수리팀이 와도 몇 시간은 걸릴 거라고.”</p>
+<p>“내가 할게.” 내가 말했다. “카일, 네가 가지고 있는 도구 중에 임시로 연결할 만한 게 있어?”</p>
+<p>“내가? 대장, 내가 그런 걸 어떻게 알아? 난 정비공이 아니잖아.” 카일이 난감한 표정을 지었다. “하지만… 절연 테이프랑 몇 가지 부품이 있긴 한데.” 그는 자신의 배낭을 뒤적였다.</p>
+<p>“그걸로 해봐야 해.” 나는 카일의 어깨를 툭 쳤다. “미라, 노아는 주변을 경계해. 에런은 내 엄호. 내가 올라갈게.”</p>
+<p>“위험해, 대장!” 에런이 나를 붙잡았다. “제가 하겠습니다. 제가 더 가볍고 빠릅니다.”</p>
+<p>“아니.” 나는 단호하게 말했다. “내가 더 잘 알아. 내가 결정한다.” 나는 그의 손을 뿌리치고 추진기관의 외벽을 타고 올라가기 시작했다. 놈들이 파놓은 틈새와 긁힌 자국을 발판 삼아 위로 향했다.</p>
+<p>차가운 금속이 손에 느껴졌다. 미끄럽고 불안정했다. 놈들의 공격으로 약해진 외벽이 언제 무너질지 알 수 없었다. 추진기관의 거대한 몸체 위로 올라서자, 도시의 풍경이 한눈에 들어왔다. 멀리 보이는 차벽과 그 너머의 황량한 대지. 그리고 그 위를 가로지르는 짙은 먹구름이 보였다.</p>
+<p>나는 파손된 연료관 연결부에 접근했다. 놈들이 정교하게, 하지만 확실하게 파괴한 흔적이 역력했다. 내 손에 땀이 흥건했다.</p>
+<p>“대장, 여기 이거랑, 이거 어때? 임시로 고정할 만한 나사도 찾았어!” 카일이 아래에서 부품을 던져주었다. 그의 목소리는 평소보다 훨씬 진지했다.</p>
+<p>나는 카일이 던져준 부품들을 받아들고, 그의 지시에 따라 연결부를 조작했다. 손이 떨렸지만, 한 치의 오차도 용납할 수 없었다. 이 작은 실수가 도시 전체의 운명을 결정할 터였다.</p>
+<p>그때, 노아가 외쳤다. “형! 저기, 저 벽에 있는 그림이랑 똑같아! 노란색 그림!”</p>
+<p>나는 노아가 가리키는 곳을 보았다. 추진기관 내부의 거대한 금속 벽에는 오래된 노란색 그림이 희미하게 남아 있었다. 노아가 베껴 그린 그림과 정확히 일치하는 문양이었다. 그것은 추진기관의 구조도이자 동시에 경고문처럼 보였다. 그리고 그 중앙에는 내 손의 흉터와 같은 모양의 불에 그슬린 흔적이 선명했다.</p>
+<p>“젠장, 이걸 왜 이제야!” 카일이 자신의 머리를 쥐어뜯었다. “그러니까, 이 그림이 추진기관의 약점이었다는 거잖아?”</p>
+<p>“아니.” 나는 그림을 보며 중얼거렸다. “이건… 약점이 아니야. 이건…”</p>
+<p>그 순간, 내 머릿속에 섬광처럼 스쳐 지나가는 생각이 있었다. 놈들이 나를 죽이지 않은 이유. 놈들이 이 그림을 남긴 이유. 놈들은 도시를 파괴하려는 것이 아니었다. 놈들은… 메시지를 보내고 있었다.</p>
+<p>하지만 그 메시지가 무엇인지는 알 수 없었다. 일단은 연료관을 고정해야 했다. 나는 카일의 도움을 받아 겨우 임시 연결을 마쳤다. 거친 숨을 몰아쉬며 아래로 내려왔다.</p>
+<p>“성공했어?” 미라가 물었다.</p>
+<p>“일시적이야.” 나는 고개를 저었다. “버틸 수 있을지</p>
+<p>모르겠어.”</p>
+<p>그때, 지휘 구역에서 다시 무전이 들려왔다.</p>
+<p>“주 추진기관 3번 정지. 현재 속도 유지 시 일몰 경계까지 71시간.”</p>
+            </div>
+            <nav class="chapter-nav">
+                <button class="nav-btn" data-step="-1">← 이전 화</button>
+                <button class="nav-btn" data-toc>목차</button>
+                <button class="nav-btn" data-step="1">다음 화 →</button>
+            </nav>
+        </article>
+</main>
+
+<div class="pager">
+    <button data-page="-1">◀</button>
+    <div class="pos" id="pagePos"></div>
+    <button data-page="1">▶</button>
+</div>
+
+<script>
+(function () {
+    var KEY = 'book:' + "유토피아프로젝트";
+    var root = document.documentElement;
+    var cover = document.getElementById('cover');
+    var toc = document.getElementById('toc');
+    var panel = document.getElementById('panel');
+    var barTitle = document.getElementById('barTitle');
+    var chapters = [].slice.call(document.querySelectorAll('.chapter'));
+    var current = -1;
+
+    var prefs = { size: 17, font: 'serif', theme: 'light', mode: 'scroll', last: -1, read: [] };
+    try { Object.assign(prefs, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
+
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch (e) {} }
+
+    function applyPrefs() {
+        root.style.setProperty('--size', prefs.size + 'px');
+        root.dataset.font = prefs.font;
+        root.dataset.theme = prefs.theme;
+        root.dataset.mode = prefs.mode;
+        panel.querySelectorAll('[data-font]').forEach(function (b) { b.classList.toggle('on', b.dataset.font === prefs.font); });
+        panel.querySelectorAll('[data-theme]').forEach(function (b) { b.classList.toggle('on', b.dataset.theme === prefs.theme); });
+        panel.querySelectorAll('[data-mode]').forEach(function (b) { b.classList.toggle('on', b.dataset.mode === prefs.mode); });
+    }
+
+    function markRead(index) {
+        if (prefs.read.indexOf(index) === -1) { prefs.read.push(index); }
+    }
+
+    function renderToc() {
+        toc.querySelectorAll('.toc-item').forEach(function (item, i) {
+            item.classList.toggle('read', prefs.read.indexOf(i) !== -1);
+        });
+    }
+
+    function show(what) {
+        cover.hidden = what !== 'cover';
+        toc.hidden = what !== 'toc';
+        chapters.forEach(function (c) { c.hidden = true; });
+        if (typeof what === 'number') {
+            chapters[what].hidden = false;
+            current = what;
+            prefs.last = what;
+            markRead(what);
+            barTitle.textContent = chapters[what].querySelector('h2').textContent
+                || chapters[what].querySelector('.chapter-num').textContent;
+            var nav = chapters[what].querySelector('.chapter-nav');
+            nav.querySelector('[data-step="-1"]').disabled = what === 0;
+            nav.querySelector('[data-step="1"]').disabled = what === chapters.length - 1;
+            chapters[what].scrollLeft = 0;
+        } else {
+            current = -1;
+            barTitle.textContent = "유토피아프로젝트";
+        }
+        if (what === 'toc') renderToc();
+        window.scrollTo(0, 0);
+        updatePager();
+        save();
+    }
+
+    // 좌우 넘김: 단(column)을 가로로 밀어 한 화면씩 보여준다
+    function updatePager() {
+        var pos = document.getElementById('pagePos');
+        if (prefs.mode !== 'page' || current < 0) { pos.textContent = ''; return; }
+        var el = chapters[current];
+        var per = el.clientWidth;
+        var page = Math.round(el.scrollLeft / per) + 1;
+        var total = Math.max(1, Math.ceil(el.scrollWidth / per));
+        pos.textContent = chapters[current].querySelector('.chapter-num').textContent + '  ' + page + ' / ' + total;
+    }
+
+    function flip(direction) {
+        if (current < 0) return;
+        var el = chapters[current];
+        var per = el.clientWidth;
+        var next = el.scrollLeft + direction * per;
+
+        if (next < 0) { if (current > 0) show(current - 1); return; }
+        if (next >= el.scrollWidth - 4) {
+            if (current < chapters.length - 1) show(current + 1);
+            return;
+        }
+        el.scrollLeft = next;
+        updatePager();
+    }
+
+    document.addEventListener('click', function (event) {
+        var target = event.target.closest('[data-start],[data-toc],[data-home],[data-go],[data-step],[data-panel],[data-size],[data-font],[data-theme],[data-mode],[data-page]');
+        if (!target) { if (!panel.hidden && !event.target.closest('#panel,[data-panel]')) panel.hidden = true; return; }
+
+        if (target.hasAttribute('data-start')) return show(prefs.last >= 0 ? prefs.last : 0);
+        if (target.hasAttribute('data-toc')) return show('toc');
+        if (target.hasAttribute('data-home')) return show('cover');
+        if (target.hasAttribute('data-go')) return show(Number(target.dataset.go));
+        if (target.hasAttribute('data-step')) return show(current + Number(target.dataset.step));
+        if (target.hasAttribute('data-panel')) { panel.hidden = !panel.hidden; return; }
+        if (target.hasAttribute('data-page')) return flip(Number(target.dataset.page));
+
+        if (target.dataset.size) prefs.size = Math.min(26, Math.max(13, prefs.size + Number(target.dataset.size)));
+        if (target.dataset.font) prefs.font = target.dataset.font;
+        if (target.dataset.theme) prefs.theme = target.dataset.theme;
+        if (target.dataset.mode) prefs.mode = target.dataset.mode;
+        applyPrefs(); updatePager(); save();
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'ArrowRight') { prefs.mode === 'page' ? flip(1) : (current >= 0 && current < chapters.length - 1 && show(current + 1)); }
+        if (event.key === 'ArrowLeft') { prefs.mode === 'page' ? flip(-1) : (current > 0 && show(current - 1)); }
+        if (event.key === 'Escape') { panel.hidden = true; show('toc'); }
+    });
+
+    // 모바일 좌우 쓸기
+    var touchX = null;
+    document.addEventListener('touchstart', function (e) { touchX = e.changedTouches[0].clientX; }, { passive: true });
+    document.addEventListener('touchend', function (e) {
+        if (touchX === null || prefs.mode !== 'page') return;
+        var dx = e.changedTouches[0].clientX - touchX;
+        if (Math.abs(dx) > 50) flip(dx < 0 ? 1 : -1);
+        touchX = null;
+    }, { passive: true });
+
+    window.addEventListener('resize', updatePager);
+
+    applyPrefs();
+    show('cover');
+})();
+</script>
+</body>
+</html>
